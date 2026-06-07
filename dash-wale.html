@@ -1,0 +1,1893 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dash - Wale's Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.5.0/dist/tabler-icons.min.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5.0.4/dist/tesseract.min.js"></script>
+<style>
+  :root{
+    --bg:#f4f5f7;
+    --surface:#ffffff;
+    --surface-2:#f7f8fa;
+    --line:#eceef1;
+    --line-2:#e3e6ea;
+    --ink:#15181d;
+    --ink-2:#5c636e;
+    --ink-3:#9aa1ac;
+    --accent:#185fa5;
+    --accent-2:#378add;
+    --accent-soft:#e6f1fb;
+    --teal:#1d9e75;
+    --teal-soft:#e1f5ee;
+    --coral:#d85a30;
+    --coral-soft:#faece7;
+    --green:#639922;
+    --red:#a32d2d;
+    --red-soft:#fcebeb;
+    --amber:#854f0b;
+    --amber-soft:#faeeda;
+    --radius:14px;
+    --radius-lg:18px;
+    --radius-sm:10px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{
+    font-family:'Inter',-apple-system,sans-serif;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;
+    background:var(--bg);
+    color:var(--ink);
+    -webkit-font-smoothing:antialiased;
+    line-height:1.5;
+  }
+  .app{display:flex;min-height:100vh;}
+  .sidebar{
+    width:240px;flex-shrink:0;background:var(--surface);
+    border-right:1px solid var(--line);
+    display:flex;flex-direction:column;padding:22px 16px;
+    position:sticky;top:0;height:100vh;overflow-y:auto;
+  }
+  .brand{display:flex;align-items:center;gap:10px;padding:0 8px 24px;border-bottom:1px solid rgba(24,95,165,0.1);}
+  .brand-logo{display:block;flex-shrink:0;}
+  .brand-mark{width:40px;height:40px;
+    display:flex;align-items:center;justify-content:center;
+    position:relative;overflow:hidden;flex-shrink:0;background:transparent;}
+  .brand-name{font-weight:800;font-size:21px;letter-spacing:-0.03em;background:linear-gradient(135deg,var(--accent),#0d3d7a);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+  .nav-label{font-size:11px;font-weight:600;color:var(--ink-3);text-transform:uppercase;
+    letter-spacing:0.06em;padding:0 8px;margin:14px 0 6px;}
+  .nav-item{display:flex;align-items:center;gap:12px;padding:11px 13px;border-radius:var(--radius-sm);
+    color:var(--ink-2);font-size:14px;font-weight:500;cursor:pointer;transition:all .2s;margin-bottom:3px;}
+  .nav-item i{font-size:22px;opacity:0.85;transition:all .2s;}
+  .nav-item:hover{background:var(--surface-2);color:var(--ink);}
+  .nav-item:hover i{opacity:1;transform:translateX(2px);}
+  .nav-item.active{background:var(--accent-soft);color:var(--accent);border-left:3px solid var(--accent);padding-left:10px;}
+  .nav-item.active i{opacity:1;}
+  .upgrade{margin-top:auto;background:var(--surface-2);border:1px solid var(--line);
+    border-radius:var(--radius);padding:14px;}
+  .upgrade p{font-size:13px;font-weight:600;margin-bottom:4px;}
+  .upgrade button{width:100%;background:var(--accent);color:#fff;border:none;border-radius:var(--radius-sm);
+    padding:9px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;}
+  .main{flex:1;min-width:0;padding:24px 30px 40px;overflow-y:auto;}
+  .topbar{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:26px;flex-wrap:wrap;gap:14px;}
+  .greet-date{font-size:13px;color:var(--ink-2);margin-bottom:3px;}
+  .greet{font-size:26px;font-weight:700;letter-spacing:-0.02em;}
+  .topbar-right{display:flex;align-items:center;gap:12px;}
+  .btn{background:var(--accent);color:#fff;border:none;border-radius:var(--radius-sm);
+    padding:10px 18px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .2s;display:flex;align-items:center;gap:6px;box-shadow:0 2px 8px rgba(24,95,165,0.2);}
+  .btn:hover{opacity:.95;transform:translateY(-1px);box-shadow:0 4px 12px rgba(24,95,165,0.3);}
+  .btn i{font-size:16px;}
+  .btn-outline{background:var(--surface);border:1px solid var(--line-2);color:var(--ink);padding:8px 15px;}
+  .avatar{width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,var(--coral),#c23d1f);color:#fff;
+    display:flex;align-items:center;justify-content:center;font-weight:700;font-size:15px;flex-shrink:0;cursor:pointer;box-shadow:0 3px 10px rgba(216,90,48,0.2);transition:all .2s;}
+  .avatar:hover{transform:scale(1.05);box-shadow:0 5px 15px rgba(216,90,48,0.3);}
+  .section{display:none!important;}
+  .section.active{display:block!important;}
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:20px;margin-bottom:16px;}
+  .card-title{font-size:16px;font-weight:600;margin-bottom:16px;}
+  .form-group{margin-bottom:14px;display:flex;flex-direction:column;}
+  .form-group label{font-size:13px;font-weight:600;margin-bottom:6px;color:var(--ink);}
+  input,textarea,select{font-family:inherit;font-size:13px;border:1px solid var(--line-2);border-radius:var(--radius-sm);
+    padding:9px 12px;color:var(--ink);width:100%;transition:border .15s;}
+  input:focus,textarea:focus,select:focus{outline:none;border-color:var(--accent);}
+  textarea{resize:vertical;min-height:80px;}
+  .form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+  .stat{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:18px;margin-bottom:12px;}
+  .stat.feature{background:var(--accent);border-color:var(--accent);}
+  .stat-label{font-size:13px;color:var(--ink-2);margin-bottom:8px;display:flex;align-items:center;gap:6px;}
+  .stat-label i{font-size:18px;opacity:0.8;}
+  .stat.feature .stat-label{color:#b5d4f4;}
+  .stat.feature .stat-label i{opacity:0.9;}
+  .stat-value{font-size:28px;font-weight:700;}
+  .stat.feature .stat-value{color:#fff;}
+  .item{background:var(--surface-2);border:1px solid var(--line);border-radius:var(--radius-sm);
+    padding:12px;margin-bottom:9px;display:flex;justify-content:space-between;align-items:center;}
+  .item-left{flex:1;}
+  .item-title{font-size:13.5px;font-weight:500;margin-bottom:2px;}
+  .item-meta{font-size:11px;color:var(--ink-3);}
+  .btn-small{background:none;border:none;color:var(--ink-3);font-size:18px;cursor:pointer;padding:6px;border-radius:6px;transition:all .2s;display:flex;align-items:center;justify-content:center;}
+  .btn-small:hover{background:rgba(0,0,0,0.05);color:var(--accent);transform:scale(1.1);}
+  .btn-small[onclick*="delete"]:hover{color:var(--red);}
+  .btn-small[onclick*="edit"]:hover{color:var(--accent);}
+  .pill{display:inline-block;font-size:10.5px;font-weight:600;padding:3px 9px;border-radius:999px;margin-left:auto;}
+  .pill.high{background:var(--red-soft);color:var(--red);}
+  .pill.med{background:var(--amber-soft);color:var(--amber);}
+  .pill.low{background:var(--surface);color:var(--ink-2);}
+  .progress{height:8px;background:var(--surface-2);border-radius:999px;overflow:hidden;margin-top:8px;}
+  .progress-fill{height:100%;border-radius:999px;transition:width .3s;}
+  .modal-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(21,24,29,0.6);
+    display:flex;align-items:center;justify-content:center;z-index:1000;font-family:inherit;}
+  .modal{background:var(--surface);border-radius:var(--radius-lg);padding:32px;width:90%;max-width:420px;box-shadow:0 12px 48px rgba(0,0,0,0.12);}
+  .modal-title{font-size:22px;font-weight:700;margin-bottom:8px;}
+  .modal-subtitle{font-size:13px;color:var(--ink-2);margin-bottom:24px;}
+  .modal .form-group{margin-bottom:16px;}
+  .modal .btn{width:100%;padding:11px;}
+  .invoice-preview{background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:40px;font-family:'Arial',sans-serif;max-width:600px;margin:0 auto;}
+  @media(max-width:1100px){
+    .sidebar{width:60px;padding:16px 8px;}
+    .sidebar .brand{flex-direction:column;gap:8px;padding-bottom:12px;}
+    .brand-name{display:none;}
+    .nav-label{display:none;}
+    .nav-item span{display:none;}
+    .upgrade{display:none;}
+    .main{padding:18px;}
+  }
+  @media(max-width:760px){
+    .sidebar{display:none;}
+    .modal{width:95%;padding:20px;}
+    .form-row{grid-template-columns:1fr;}
+  }
+</style>
+</head>
+<body>
+
+<div class="app">
+  <aside class="sidebar">
+    <div class="brand">
+      <img src="Logo_.jpg" alt="Dash Logo" style="width:90px;height:auto;padding:10px;">
+    </div>
+    <div class="nav-label">Workspace</div>
+    <div class="nav-item active" onclick="switchSection('dashboard')"><i class="ti ti-layout-grid"></i><span>Dashboard</span></div>
+    <div class="nav-item" onclick="switchSection('tasks')"><i class="ti ti-checkbox"></i><span>Tasks</span></div>
+    <div class="nav-item" onclick="switchSection('invoices')"><i class="ti ti-file-invoice"></i><span>Invoices</span></div>
+    <div class="nav-item" onclick="switchSection('goals')"><i class="ti ti-target-arrow"></i><span>Goals</span></div>
+    <div class="nav-item" onclick="switchSection('schedule')"><i class="ti ti-calendar"></i><span>Schedule</span></div>
+    <div class="nav-label">Insights</div>
+    <div class="nav-item" onclick="switchSection('progress')"><i class="ti ti-chart-line"></i><span>Progress</span></div>
+    <div class="nav-item" onclick="switchSection('time')"><i class="ti ti-clock"></i><span>Time</span></div>
+    <div class="nav-item" onclick="switchSection('clients')"><i class="ti ti-users"></i><span>Clients</span></div>
+    <div class="nav-item" onclick="switchSection('finance')"><i class="ti ti-chart-bar"></i><span>Finance</span></div>
+    <div class="nav-item" onclick="switchSection('gym')"><i class="ti ti-barbell"></i><span>Gym</span></div>
+    <div class="nav-item" onclick="switchSection('nutrition')" style="display:none;"><i class="ti ti-apple"></i><span>Nutrition</span></div>
+    <div class="nav-item" onclick="switchSection('faith')" style="display:none;"><i class="ti ti-heart"></i><span>Faith</span></div>
+    <div class="nav-item" onclick="switchSection('health')" style="display:none;"><i class="ti ti-heart-pulse"></i><span>Health</span></div>
+    <div class="nav-item" onclick="switchSection('relationships')" style="display:none;"><i class="ti ti-hearts"></i><span>Relations</span></div>
+    <div class="nav-item" onclick="switchSection('learning')" style="display:none;"><i class="ti ti-lightbulb"></i><span>Learning</span></div>
+    <div class="nav-item" onclick="switchSection('notes')"><i class="ti ti-notebook"></i><span>Notes</span></div>
+    <div class="nav-label">Account</div>
+    <div class="nav-item" onclick="switchSection('insights-settings')"><i class="ti ti-adjustments"></i><span>Insights</span></div>
+    <div class="nav-item" onclick="openSettings()"><i class="ti ti-settings"></i><span>Settings</span></div>
+  </aside>
+
+  <main class="main">
+    <div class="topbar">
+      <div>
+        <div class="greet-date" id="greet-date"></div>
+        <div class="greet"><span id="greeting-text">Good morning</span>, <span id="user-name">there</span></div>
+      </div>
+      <div class="topbar-right">
+        <div class="avatar" id="avatar" onclick="openSettings()" style="cursor:pointer;"></div>
+      </div>
+    </div>
+
+    <div id="dashboard" class="section active">
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:16px;">
+        <div class="stat feature">
+          <div class="stat-label"><i class="ti ti-wallet"></i>Earned this month</div>
+          <div class="stat-value" id="dash-earned">€0</div>
+          <div class="stat-label" style="margin-top:8px;color:#85b7eb;" id="dash-progress">0% of target</div>
+        </div>
+        <div class="stat">
+          <div class="stat-label"><i class="ti ti-hourglass"></i>Hourly rate</div>
+          <div class="stat-value" id="dash-hourly">€0/h</div>
+          <div class="stat-label" style="margin-top:8px;" id="dash-hours">0h tracked</div>
+        </div>
+        <div class="stat">
+          <div class="stat-label"><i class="ti ti-file-invoice"></i>Open invoices</div>
+          <div class="stat-value" id="dash-invoices">0</div>
+          <div class="stat-label" style="margin-top:8px;" id="dash-inv-amt">€0 outstanding</div>
+        </div>
+        <div class="stat">
+          <div class="stat-label"><i class="ti ti-alert-circle"></i>Overdue</div>
+          <div class="stat-value" id="dash-overdue">0</div>
+          <div class="stat-label" style="margin-top:8px;color:var(--red);" id="dash-overdue-amt">€0 at risk</div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">Today's tasks</div>
+        <div id="dash-task-list"></div>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:14px;margin-bottom:16px;">
+        <div class="card">
+          <div class="card-title"><i class="ti ti-wallet" style="font-size:18px;margin-right:6px;"></i>Quick stats</div>
+          <div style="font-size:24px;font-weight:700;color:var(--accent);margin:10px 0;">€<span id="dash-total-earned">0</span></div>
+          <div style="font-size:12px;color:var(--ink-3);margin-bottom:12px;">Total earned all time</div>
+          <div style="font-size:24px;font-weight:700;margin:10px 0;"><span id="dash-total-hours">0</span>h</div>
+          <div style="font-size:12px;color:var(--ink-3);">Hours tracked</div>
+        </div>
+        <div class="card">
+          <div class="card-title"><i class="ti ti-target" style="font-size:18px;margin-right:6px;"></i>Your rate</div>
+          <div style="font-size:24px;font-weight:700;color:var(--green);margin:10px 0;">€<span id="dash-your-rate">0</span>/h</div>
+          <div style="font-size:12px;color:var(--ink-3);margin-bottom:12px;">Current average</div>
+          <div style="font-size:24px;font-weight:700;margin:10px 0;"><span id="dash-clients-count">0</span></div>
+          <div style="font-size:12px;color:var(--ink-3);">Active clients</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tasks Section -->
+    <div id="tasks" class="section">
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+          <div class="card-title" style="margin:0;">All tasks</div>
+          <button class="btn" onclick="openForm('tasks')"><i class="ti ti-plus" style="margin-right:5px;"></i>New task</button>
+        </div>
+        <div id="tasks-form" style="background:var(--surface-2);padding:14px;border-radius:var(--radius-sm);margin-bottom:16px;display:none;">
+          <div class="form-group">
+            <label>Task</label>
+            <input id="tasks-desc" type="text" placeholder="What needs to be done?">
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Start date</label>
+              <input id="tasks-start" type="date">
+            </div>
+            <div class="form-group">
+              <label>Due date</label>
+              <input id="tasks-date" type="date">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Category</label>
+              <select id="tasks-cat"><option>General</option><option>Work</option><option>Learning</option><option>Health</option></select>
+            </div>
+            <div class="form-group">
+              <label>Priority</label>
+              <select id="tasks-pri"><option value="low">Low</option><option value="med" selected>Medium</option><option value="high">High</option></select>
+            </div>
+          </div>
+          <div style="display:flex;gap:8px;">
+            <button class="btn" onclick="save('tasks')">Save</button>
+            <button class="btn-outline" onclick="closeForm('tasks')">Cancel</button>
+          </div>
+        </div>
+        <div id="tasks-list"></div>
+      </div>
+    </div>
+
+    <!-- Invoices Section -->
+    <div id="invoices" class="section">
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+          <div class="card-title" style="margin:0;">Invoices</div>
+          <button class="btn" onclick="openForm('invoices')"><i class="ti ti-plus" style="margin-right:5px;"></i>New invoice</button>
+        </div>
+        <div id="invoices-form" style="background:var(--surface-2);padding:14px;border-radius:var(--radius-sm);margin-bottom:16px;display:none;">
+          <div class="form-row">
+            <div class="form-group">
+              <label>Invoice #</label>
+              <input id="invoices-num" type="text" placeholder="INV-001">
+            </div>
+            <div class="form-group">
+              <label>Client name</label>
+              <input id="invoices-client" type="text" placeholder="Client name">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Date</label>
+              <input id="invoices-date" type="date">
+            </div>
+            <div class="form-group">
+              <label>Due date</label>
+              <input id="invoices-due" type="date">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label id="invoices-amount-label">Amount</label>
+              <input id="invoices-amount" type="number" placeholder="0.00">
+            </div>
+            <div class="form-group">
+              <label>Tax (%)</label>
+              <input id="invoices-tax" type="number" placeholder="0" min="0" max="100" step="0.1">
+            </div>
+          </div>
+          <div style="display:flex;gap:8px;">
+            <button class="btn" onclick="save('invoices')">Save</button>
+            <button class="btn-outline" onclick="closeForm('invoices')">Cancel</button>
+          </div>
+        </div>
+        <div id="invoices-list"></div>
+      </div>
+    </div>
+
+    <!-- Goals Section -->
+    <div id="goals" class="section">
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+          <div class="card-title" style="margin:0;">Financial goals</div>
+          <button class="btn" onclick="openForm('goals')"><i class="ti ti-plus" style="margin-right:5px;"></i>New goal</button>
+        </div>
+        <div id="goals-form" style="background:var(--surface-2);padding:14px;border-radius:var(--radius-sm);margin-bottom:16px;display:none;">
+          <div class="form-group">
+            <label>Goal name</label>
+            <input id="goals-name" type="text" placeholder="e.g., Photography equipment fund">
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label id="goals-target-label">Target amount</label>
+              <input id="goals-target" type="number" placeholder="0.00">
+            </div>
+            <div class="form-group">
+              <label id="goals-current-label">Current amount</label>
+              <input id="goals-current" type="number" placeholder="0.00">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Type</label>
+              <select id="goals-type"><option value="recurring">Recurring (monthly)</option><option value="onetime">One-time</option><option value="annual">Annual</option></select>
+            </div>
+            <div class="form-group">
+              <label>Deadline</label>
+              <input id="goals-deadline" type="date">
+            </div>
+          </div>
+          <div style="display:flex;gap:8px;">
+            <button class="btn" onclick="save('goals')">Save</button>
+            <button class="btn-outline" onclick="closeForm('goals')">Cancel</button>
+          </div>
+        </div>
+        <div id="goals-list"></div>
+      </div>
+    </div>
+
+    <!-- Schedule Section -->
+    <div id="schedule" class="section">
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+          <div class="card-title" style="margin:0;">Weekly schedule</div>
+          <button class="btn" onclick="openForm('schedule')"><i class="ti ti-plus" style="margin-right:5px;"></i>Add block</button>
+        </div>
+        <div id="schedule-form" style="background:var(--surface-2);padding:14px;border-radius:var(--radius-sm);margin-bottom:16px;display:none;">
+          <div class="form-group">
+            <label>Activity</label>
+            <input id="schedule-title" type="text" placeholder="e.g., Client work">
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Day</label>
+              <select id="schedule-day" onchange="updateBlockPreview()"><option>Monday</option><option>Tuesday</option><option>Wednesday</option><option>Thursday</option><option>Friday</option><option>Saturday</option><option>Sunday</option></select>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Start time</label>
+              <input id="schedule-time" type="time" onchange="updateBlockPreview()">
+            </div>
+            <div class="form-group">
+              <label>Duration (hours)</label>
+              <input id="schedule-duration" type="number" min="0.5" step="0.5" placeholder="1.5" onchange="updateBlockPreview()">
+            </div>
+          </div>
+          <div id="schedule-preview" style="background:var(--surface);border:1px solid var(--line);border-radius:var(--radius-sm);padding:10px;margin-bottom:12px;font-size:13px;display:none;">
+            <span id="preview-text"></span>
+          </div>
+          <div style="display:flex;gap:8px;">
+            <button class="btn" onclick="save('schedule')">Save</button>
+            <button class="btn-outline" onclick="closeForm('schedule')">Cancel</button>
+          </div>
+        </div>
+        <div id="schedule-list"></div>
+      </div>
+    </div>
+
+    <!-- Finance Section -->
+    <div id="finance" class="section">
+      <div class="card">
+        <div class="card-title">Income & expenses</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;">
+          <div class="stat">
+            <div class="stat-label">Total income</div>
+            <div class="stat-value" id="finance-income">€0</div>
+          </div>
+          <div class="stat">
+            <div class="stat-label">Total expenses</div>
+            <div class="stat-value" style="color:var(--red);" id="finance-expense">€0</div>
+          </div>
+        </div>
+        <div style="display:flex;gap:8px;margin-bottom:12px;">
+          <button class="btn" onclick="openForm('finance')"><i class="ti ti-plus" style="margin-right:5px;"></i>Add transaction</button>
+          <button class="btn" onclick="document.getElementById('receipt-upload').click()" style="background:var(--green);"><i class="ti ti-camera" style="margin-right:5px;"></i>Scan receipt</button>
+          <input type="file" id="receipt-upload" accept="image/*" style="display:none;" onchange="scanReceipt(this)">
+        </div>
+        <div id="ocr-status" style="display:none;background:var(--accent-soft);padding:10px;border-radius:var(--radius-sm);margin-bottom:12px;color:var(--accent);font-size:13px;"></div>
+        <div id="finance-form" style="background:var(--surface-2);padding:14px;border-radius:var(--radius-sm);margin:16px 0;display:none;">
+          <div class="form-row">
+            <div class="form-group">
+              <label>Type</label>
+              <select id="finance-type"><option value="income">Income</option><option value="expense">Expense</option></select>
+            </div>
+            <div class="form-group">
+              <label id="finance-amount-label">Amount</label>
+              <input id="finance-amount" type="number" placeholder="0.00">
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Description</label>
+            <input id="finance-desc" type="text" placeholder="e.g., Fiverr project">
+          </div>
+          <div class="form-group">
+            <label>Category</label>
+            <select id="finance-cat"><option>General</option><option>Client work</option><option>Software</option><option>Equipment</option><option>Food</option></select>
+          </div>
+          <div style="display:flex;gap:8px;">
+            <button class="btn" onclick="save('finance')">Save</button>
+            <button class="btn-outline" onclick="closeForm('finance')">Cancel</button>
+          </div>
+        </div>
+        <div id="finance-list"></div>
+      </div>
+    </div>
+
+    <!-- Gym Section -->
+    <div id="gym" class="section">
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+          <div class="card-title" style="margin:0;">Workouts</div>
+          <button class="btn" onclick="openForm('gym')"><i class="ti ti-plus" style="margin-right:5px;"></i>Log session</button>
+        </div>
+        <div id="gym-form" style="background:var(--surface-2);padding:14px;border-radius:var(--radius-sm);margin-bottom:16px;display:none;">
+          <div class="form-row">
+            <div class="form-group">
+              <label>Date</label>
+              <input id="gym-date" type="date">
+            </div>
+            <div class="form-group">
+              <label>Type</label>
+              <select id="gym-type"><option>Push</option><option>Pull</option><option>Legs</option><option>Full body</option><option>Cardio</option></select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Duration (mins)</label>
+            <input id="gym-duration" type="number" placeholder="60">
+          </div>
+          <div class="form-group">
+            <label>Notes</label>
+            <textarea id="gym-notes" placeholder="How did it go?"></textarea>
+          </div>
+          <div style="display:flex;gap:8px;">
+            <button class="btn" onclick="save('gym')">Save</button>
+            <button class="btn-outline" onclick="closeForm('gym')">Cancel</button>
+          </div>
+        </div>
+        <div id="gym-list"></div>
+      </div>
+    </div>
+
+    <!-- Time Tracking Section -->
+    <div id="time" class="section">
+      <div class="card">
+        <div class="card-title">Time tracking</div>
+        <div style="background:var(--accent);color:#fff;padding:20px;border-radius:var(--radius);margin-bottom:16px;text-align:center;">
+          <div style="font-size:48px;font-weight:700;margin-bottom:10px;font-family:monospace;" id="timer-display">00:00:00</div>
+          <div style="display:flex;gap:8px;justify-content:center;">
+            <button class="btn" style="background:#fff;color:var(--accent);" id="timer-btn" onclick="toggleTimer()">Start</button>
+            <button class="btn" style="background:#fff;color:var(--accent);" onclick="resetTimer()">Reset</button>
+          </div>
+          <div id="timer-client" style="margin-top:10px;font-size:13px;opacity:0.9;"></div>
+        </div>
+        <div class="form-group">
+          <label>Assign to client</label>
+          <select id="timer-client-select" onchange="updateTimerClient()">
+            <option value="">No client</option>
+          </select>
+        </div>
+        <button class="btn" style="width:100%;" onclick="saveTimeEntry()">Save time entry</button>
+        <div id="time-list" style="margin-top:20px;"></div>
+      </div>
+    </div>
+
+    <!-- Clients Section -->
+    <div id="clients" class="section">
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+          <div class="card-title" style="margin:0;">Clients</div>
+          <button class="btn" onclick="openForm('clients')"><i class="ti ti-plus" style="margin-right:5px;"></i>Add client</button>
+        </div>
+        <div id="clients-stats" style="display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-bottom:20px;"></div>
+        <div class="card-title" style="margin-bottom:12px;">Your clients</div>
+        <div id="clients-list" style="margin-bottom:20px;"></div>
+        <div id="clients-form" style="background:var(--surface-2);padding:14px;border-radius:var(--radius-sm);margin-bottom:16px;display:none;">
+          <div style="font-weight:600;margin-bottom:14px;">Add new client</div>
+          <div class="form-group">
+            <label>Client name</label>
+            <input id="clients-name" type="text" placeholder="e.g., Acme Corp">
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Email</label>
+              <input id="clients-email" type="email" placeholder="contact@acme.com">
+            </div>
+            <div class="form-group">
+              <label id="clients-rate-label">Hourly rate</label>
+              <input id="clients-rate" type="number" placeholder="50" step="5">
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Payment terms</label>
+            <select id="clients-terms"><option>NET 30</option><option>NET 15</option><option>NET 45</option><option>Due on receipt</option><option>Retainer</option></select>
+          </div>
+          <div class="form-group">
+            <label>Notes</label>
+            <input id="clients-notes" type="text" placeholder="e.g., Reliable, prefers email">
+          </div>
+          <div style="display:flex;gap:8px;">
+            <button class="btn" onclick="save('clients')">Save client</button>
+            <button class="btn-outline" onclick="closeForm('clients')">Cancel</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Notes Section -->
+    <div id="notes" class="section">
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+          <div class="card-title" style="margin:0;">Notes & reflections</div>
+          <button class="btn" onclick="openForm('notes')"><i class="ti ti-plus" style="margin-right:5px;"></i>New entry</button>
+        </div>
+        <div id="notes-form" style="background:var(--surface-2);padding:14px;border-radius:var(--radius-sm);margin-bottom:16px;display:none;">
+          <div class="form-group">
+            <label>Title</label>
+            <input id="notes-title" type="text" placeholder="e.g., Reflecting on Q2">
+          </div>
+          <div class="form-group">
+            <label>Type</label>
+            <select id="notes-type"><option>Journal</option><option>Idea</option><option>Learning</option><option>Client note</option></select>
+          </div>
+          <div class="form-group">
+            <label>Content</label>
+            <textarea id="notes-content" placeholder="Write your thoughts..."></textarea>
+          </div>
+          <div style="display:flex;gap:8px;">
+            <button class="btn" onclick="save('notes')">Save</button>
+            <button class="btn-outline" onclick="closeForm('notes')">Cancel</button>
+          </div>
+        </div>
+        <div id="notes-list"></div>
+      </div>
+    </div>
+
+    <!-- Nutrition Section -->
+    <div id="nutrition" class="section">
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+          <div class="card-title" style="margin:0;"><i class="ti ti-apple" style="font-size:18px;margin-right:6px;"></i>Nutrition</div>
+          <button class="btn" onclick="openForm('nutrition')"><i class="ti ti-plus" style="margin-right:5px;"></i>Log meal</button>
+        </div>
+        <div id="nutrition-form" style="background:var(--surface-2);padding:14px;border-radius:var(--radius-sm);margin-bottom:16px;display:none;">
+          <div class="form-group"><label>Meal type</label><select id="nutrition-type"><option>Breakfast</option><option>Lunch</option><option>Dinner</option><option>Snack</option></select></div>
+          <div class="form-group"><label>What did you eat?</label><input id="nutrition-desc" type="text" placeholder="e.g., Salmon, salad, juice"></div>
+          <div class="form-group"><label>How do you feel?</label><select id="nutrition-mood"><option value="energized">Energized 🥊</option><option value="good">Good 😊</option><option value="neutral">Neutral 😐</option><option value="sluggish">Sluggish 😴</option></select></div>
+          <div class="form-group"><label>Date</label><input id="nutrition-date" type="date"></div>
+          <div style="display:flex;gap:8px;">
+            <button class="btn" onclick="save('nutrition')">Save</button>
+            <button class="btn-outline" onclick="closeForm('nutrition')">Cancel</button>
+          </div>
+        </div>
+        <div id="nutrition-list"></div>
+      </div>
+    </div>
+
+    <!-- Faith Section -->
+    <div id="faith" class="section">
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+          <div class="card-title" style="margin:0;"><i class="ti ti-sparkles" style="font-size:18px;margin-right:6px;"></i>Faith & Spirituality</div>
+          <button class="btn" onclick="openForm('faith')"><i class="ti ti-plus" style="margin-right:5px;"></i>New entry</button>
+        </div>
+        <div style="background:var(--accent);color:#fff;padding:14px;border-radius:var(--radius);margin-bottom:16px;text-align:center;">
+          <div style="font-size:24px;font-weight:700;margin-bottom:4px;"><span id="faith-total">0 min</span></div>
+          <div style="font-size:12px;opacity:0.9;">Total time spent</div>
+        </div>
+        <div id="faith-form" style="background:var(--surface-2);padding:14px;border-radius:var(--radius-sm);margin-bottom:16px;display:none;">
+          <div class="form-group"><label>Type</label><select id="faith-type"><option>Prayer</option><option>Meditation</option><option>Reflection</option><option>Reading</option><option>Community</option></select></div>
+          <div class="form-group"><label>Duration (minutes)</label><input id="faith-duration" type="number" placeholder="30"></div>
+          <div class="form-group"><label>Notes</label><textarea id="faith-notes" placeholder="What's on your mind?"></textarea></div>
+          <div class="form-group"><label>Date</label><input id="faith-date" type="date"></div>
+          <div style="display:flex;gap:8px;">
+            <button class="btn" onclick="save('faith')">Save</button>
+            <button class="btn-outline" onclick="closeForm('faith')">Cancel</button>
+          </div>
+        </div>
+        <div id="faith-list"></div>
+      </div>
+    </div>
+
+    <!-- Health Section -->
+    <div id="health" class="section">
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+          <div class="card-title" style="margin:0;"><i class="ti ti-heart-pulse" style="font-size:18px;margin-right:6px;"></i>Health & Wellness</div>
+          <button class="btn" onclick="openForm('health')"><i class="ti ti-plus" style="margin-right:5px;"></i>Log</button>
+        </div>
+        <div id="health-form" style="background:var(--surface-2);padding:14px;border-radius:var(--radius-sm);margin-bottom:16px;display:none;">
+          <div class="form-group"><label>Category</label><select id="health-cat"><option>Sleep</option><option>Water intake</option><option>Mood</option><option>Energy</option><option>Stress</option><option>Other</option></select></div>
+          <div class="form-group"><label>Value</label><input id="health-value" type="text" placeholder="e.g., 7.5 hours, good, 8/10"></div>
+          <div class="form-group"><label>Notes</label><input id="health-notes" type="text" placeholder="How are you feeling?"></div>
+          <div class="form-group"><label>Date</label><input id="health-date" type="date"></div>
+          <div style="display:flex;gap:8px;">
+            <button class="btn" onclick="save('health')">Save</button>
+            <button class="btn-outline" onclick="closeForm('health')">Cancel</button>
+          </div>
+        </div>
+        <div id="health-list"></div>
+      </div>
+    </div>
+
+    <!-- Relationships Section -->
+    <div id="relationships" class="section">
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+          <div class="card-title" style="margin:0;"><i class="ti ti-handshake" style="font-size:18px;margin-right:6px;"></i>Relationships</div>
+          <button class="btn" onclick="openForm('relationships')"><i class="ti ti-plus" style="margin-right:5px;"></i>Log moment</button>
+        </div>
+        <div id="relationships-form" style="background:var(--surface-2);padding:14px;border-radius:var(--radius-sm);margin-bottom:16px;display:none;">
+          <div class="form-group"><label>Person/Group</label><input id="relationships-person" type="text" placeholder="e.g., Mom, partner, team"></div>
+          <div class="form-group"><label>Activity</label><select id="relationships-activity"><option>Call</option><option>Meet in person</option><option>Text</option><option>Quality time</option><option>Help/support</option></select></div>
+          <div class="form-group"><label>Notes</label><input id="relationships-notes" type="text" placeholder="What happened?"></div>
+          <div class="form-group"><label>Date</label><input id="relationships-date" type="date"></div>
+          <div style="display:flex;gap:8px;">
+            <button class="btn" onclick="save('relationships')">Save</button>
+            <button class="btn-outline" onclick="closeForm('relationships')">Cancel</button>
+          </div>
+        </div>
+        <div id="relationships-list"></div>
+      </div>
+    </div>
+
+    <!-- Learning Section -->
+    <div id="learning" class="section">
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+          <div class="card-title" style="margin:0;"><i class="ti ti-brain" style="font-size:18px;margin-right:6px;"></i>Learning & Growth</div>
+          <button class="btn" onclick="openForm('learning')"><i class="ti ti-plus" style="margin-right:5px;"></i>New skill</button>
+        </div>
+        <div style="background:var(--accent);color:#fff;padding:14px;border-radius:var(--radius);margin-bottom:16px;text-align:center;">
+          <div style="font-size:24px;font-weight:700;margin-bottom:4px;"><span id="learning-total">0h</span></div>
+          <div style="font-size:12px;opacity:0.9;">Total learning time</div>
+        </div>
+        <div id="learning-form" style="background:var(--surface-2);padding:14px;border-radius:var(--radius-sm);margin-bottom:16px;display:none;">
+          <div class="form-group"><label>Skill/Topic</label><input id="learning-topic" type="text" placeholder="e.g., JavaScript, photography, cooking"></div>
+          <div class="form-group"><label>Time spent (hours)</label><input id="learning-time" type="number" placeholder="0.5" step="0.5"></div>
+          <div class="form-group"><label>What did you learn?</label><textarea id="learning-notes" placeholder="Key takeaways..."></textarea></div>
+          <div class="form-group"><label>Date</label><input id="learning-date" type="date"></div>
+          <div style="display:flex;gap:8px;">
+            <button class="btn" onclick="save('learning')">Save</button>
+            <button class="btn-outline" onclick="closeForm('learning')">Cancel</button>
+          </div>
+        </div>
+        <div id="learning-list"></div>
+      </div>
+    </div>
+
+    <!-- Progress Tracking Section -->
+    <div id="progress" class="section">
+      <div class="card">
+        <div class="card-title"><i class="ti ti-chart-line" style="font-size:18px;margin-right:6px;"></i>Progress Tracking</div>
+        <p style="color:var(--ink-2);font-size:13px;margin-bottom:16px;">See your progress across different time periods</p>
+        <div id="progress-container"></div>
+      </div>
+    </div>
+
+    <!-- Insights Settings Section -->
+    <div id="insights-settings" class="section">
+      <div class="card">
+        <div class="card-title">Settings</div>
+        <div style="margin-bottom:24px;">
+          <label style="display:block;font-size:13px;font-weight:600;margin-bottom:8px;">Currency</label>
+          <select id="currency-select" onchange="changeCurrency(this.value)" style="width:100%;padding:10px;border:1px solid var(--surface-3);border-radius:var(--radius-sm);background:var(--surface-1);color:var(--ink);font-size:14px;">
+            <option value="EUR">Euro (€)</option>
+            <option value="USD">US Dollar ($)</option>
+            <option value="GBP">British Pound (£)</option>
+            <option value="NGN">Nigerian Naira (₦)</option>
+          </select>
+        </div>
+        <div>
+          <div style="font-size:13px;font-weight:600;margin-bottom:12px;">Track & Manage</div>
+          <p style="color:var(--ink-2);font-size:13px;margin-bottom:16px;">Choose which areas of life you want to track and reflect on</p>
+          <div id="insights-toggles" style="display:grid;grid-template-columns:repeat(2,1fr);gap:12px;"></div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script>
+  // ========== CONFIG & STATE ==========
+  let userData = { name: '', studio: '', target: 2000, email: '', logo: '', currency: 'EUR' };
+  const currencySymbols = { EUR: '€', USD: '$', GBP: '£', NGN: '₦' };
+  let currentEditingId = null;
+  let currentEditingModule = null;
+  const defaultDate = new Date().toISOString().split('T')[0];
+
+  // Module Registry: defines structure for each data module
+  const MODULE_CONFIG = {
+    tasks: {
+      storage: 'dashTasks',
+      fields: ['desc', 'start', 'date', 'cat', 'pri'],
+      defaults: { done: false, start: defaultDate, date: defaultDate, cat: 'General', pri: 'med' },
+      validation: (data) => data.desc,
+      emptyMsg: 'No tasks yet',
+      sort: (a, b) => new Date(b.date) - new Date(a.date),
+    },
+    invoices: {
+      storage: 'dashInvoices',
+      fields: ['num', 'client', 'date', 'due', 'amount', 'tax'],
+      defaults: { status: 'unpaid', date: defaultDate, tax: 0 },
+      validation: (data) => data.num && data.client && data.amount,
+      emptyMsg: 'No invoices yet',
+      sort: (a, b) => b.id - a.id,
+    },
+    goals: {
+      storage: 'dashGoals',
+      fields: ['name', 'target', 'current', 'type', 'deadline'],
+      defaults: { type: 'recurring' },
+      validation: (data) => data.name && data.target,
+      emptyMsg: 'No goals yet. Create one to start tracking!',
+      sort: (a, b) => b.id - a.id,
+    },
+    schedule: {
+      storage: 'dashSchedule',
+      fields: ['title', 'day', 'time', 'duration'],
+      defaults: {},
+      validation: (data) => data.title && data.time,
+      emptyMsg: 'No schedule blocks yet',
+      sort: (a, b) => {
+        const dayOrder = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+        const dayDiff = dayOrder.indexOf(a.day) - dayOrder.indexOf(b.day);
+        return dayDiff !== 0 ? dayDiff : a.time.localeCompare(b.time);
+      },
+    },
+    finance: {
+      storage: 'dashFinance',
+      fields: ['type', 'amount', 'desc', 'cat'],
+      defaults: { date: defaultDate, type: 'income', cat: 'General' },
+      validation: (data) => data.amount && data.desc,
+      emptyMsg: 'No transactions yet',
+      sort: (a, b) => b.id - a.id,
+    },
+    gym: {
+      storage: 'dashGym',
+      fields: ['date', 'type', 'duration', 'notes'],
+      defaults: { date: defaultDate, type: 'Push', notes: '' },
+      validation: (data) => data.date && data.duration,
+      emptyMsg: 'No workouts logged',
+      sort: (a, b) => new Date(b.date) - new Date(a.date),
+    },
+    notes: {
+      storage: 'dashNotes',
+      fields: ['title', 'type', 'content'],
+      defaults: { date: defaultDate, type: 'Journal' },
+      validation: (data) => data.title && data.content,
+      emptyMsg: 'No notes yet',
+      sort: (a, b) => b.id - a.id,
+    },
+    time: {
+      storage: 'dashTime',
+      fields: ['client', 'hours', 'date'],
+      defaults: { date: defaultDate },
+      validation: (data) => data.client && data.hours,
+      emptyMsg: 'No time entries yet',
+      sort: (a, b) => b.id - a.id,
+    },
+    clients: {
+      storage: 'dashClients',
+      fields: ['name', 'email', 'rate', 'terms', 'notes'],
+      defaults: { dateAdded: defaultDate, terms: 'NET 30', rate: 0 },
+      validation: (data) => data.name,
+      emptyMsg: 'No clients yet. Add one to get started.',
+      sort: (a, b) => b.id - a.id,
+    },
+    nutrition: {
+      storage: 'dashNutrition',
+      fields: ['type', 'desc', 'mood', 'date'],
+      defaults: { date: defaultDate, type: 'Breakfast', mood: 'good' },
+      validation: (data) => data.desc,
+      emptyMsg: 'No meals logged yet',
+      sort: (a, b) => new Date(b.date) - new Date(a.date),
+    },
+    faith: {
+      storage: 'dashFaith',
+      fields: ['type', 'duration', 'notes', 'date'],
+      defaults: { date: defaultDate, type: 'Prayer', notes: '' },
+      validation: (data) => data.duration,
+      emptyMsg: 'No entries yet',
+      sort: (a, b) => b.id - a.id,
+    },
+    health: {
+      storage: 'dashHealth',
+      fields: ['cat', 'value', 'notes', 'date'],
+      defaults: { date: defaultDate, cat: 'Sleep', notes: '' },
+      validation: (data) => data.value,
+      emptyMsg: 'No logs yet',
+      sort: (a, b) => new Date(b.date) - new Date(a.date),
+    },
+    relationships: {
+      storage: 'dashRelationships',
+      fields: ['person', 'activity', 'notes', 'date'],
+      defaults: { date: defaultDate, activity: 'Call', notes: '' },
+      validation: (data) => data.person,
+      emptyMsg: 'No connections logged yet',
+      sort: (a, b) => new Date(b.date) - new Date(a.date),
+    },
+    learning: {
+      storage: 'dashLearning',
+      fields: ['topic', 'time', 'notes', 'date'],
+      defaults: { date: defaultDate, notes: '' },
+      validation: (data) => data.topic,
+      emptyMsg: 'No learning logged yet',
+      sort: (a, b) => new Date(b.date) - new Date(a.date),
+    },
+    progress: {
+      storage: 'dashProgress',
+      fields: ['period', 'target', 'current', 'category', 'startDate', 'endDate'],
+      defaults: { period: 'daily', category: 'income' },
+      validation: (data) => data.period && data.target,
+      emptyMsg: 'No progress tracked yet',
+      sort: (a, b) => new Date(b.startDate) - new Date(a.startDate),
+    },
+  };
+
+  // ========== UTILITY FUNCTIONS ==========
+  function formatCurrency(amount) {
+    const symbol = currencySymbols[userData.currency] || '€';
+    return symbol + (typeof amount === 'number' ? amount.toFixed(2) : '0.00');
+  }
+
+  function getStorageData(module) {
+    const key = MODULE_CONFIG[module]?.storage || `dash${module}`;
+    return JSON.parse(localStorage.getItem(key) || '[]');
+  }
+
+  function saveStorageData(module, data) {
+    const key = MODULE_CONFIG[module]?.storage || `dash${module}`;
+    localStorage.setItem(key, JSON.stringify(data));
+  }
+
+  function getFormData(module) {
+    const fields = MODULE_CONFIG[module].fields;
+    const data = { id: Date.now() };
+    fields.forEach(field => {
+      const el = document.getElementById(`${module}-${field}`);
+      if (el) {
+        const value = el.type === 'number' ? parseFloat(el.value) || 0 : el.value;
+        data[field] = value;
+      }
+    });
+    return data;
+  }
+
+  function clearFormFields(module) {
+    const fields = MODULE_CONFIG[module].fields;
+    fields.forEach(field => {
+      const el = document.getElementById(`${module}-${field}`);
+      if (el) {
+        if (el.type === 'select-one') {
+          el.value = MODULE_CONFIG[module].defaults[field] || el.options[0].value;
+        } else if (el.type === 'date') {
+          el.value = defaultDate;
+        } else {
+          el.value = '';
+        }
+      }
+    });
+  }
+
+  // ========== CORE CRUD FUNCTIONS ==========
+  function openForm(module) {
+    const formEl = document.getElementById(`${module}-form`);
+    if (formEl) {
+      formEl.style.display = 'block';
+      clearFormFields(module);
+      if (module === 'invoices' || module === 'tasks' || module === 'gym') {
+        document.getElementById(`${module}-date`).value = defaultDate;
+      }
+    }
+  }
+
+  function closeForm(module) {
+    const formEl = document.getElementById(`${module}-form`);
+    if (formEl) {
+      formEl.style.display = 'none';
+      clearFormFields(module);
+      currentEditingId = null;
+      currentEditingModule = null;
+    }
+  }
+
+  function editItem(module, id) {
+    const items = getStorageData(module);
+    const item = items.find(i => i.id === parseInt(id));
+    if (!item) return;
+
+    currentEditingId = parseInt(id);
+    currentEditingModule = module;
+
+    openForm(module);
+
+    const fields = MODULE_CONFIG[module].fields;
+    fields.forEach(field => {
+      const el = document.getElementById(`${module}-${field}`);
+      if (el && item.hasOwnProperty(field)) {
+        el.value = item[field];
+      }
+    });
+  }
+
+  function save(module) {
+    const config = MODULE_CONFIG[module];
+    const data = getFormData(module);
+
+    if (!config.validation(data)) {
+      alert('Please fill in all required fields');
+      return;
+    }
+
+    const items = getStorageData(module);
+
+    if (currentEditingId) {
+      const itemIndex = items.findIndex(item => item.id === currentEditingId);
+      if (itemIndex !== -1) {
+        items[itemIndex] = { ...items[itemIndex], ...data };
+      }
+      currentEditingId = null;
+      currentEditingModule = null;
+    } else {
+      data.id = Date.now();
+      items.push(data);
+    }
+
+    saveStorageData(module, items);
+    closeForm(module);
+    refresh();
+  }
+
+  function deleteItem(module, id) {
+    if (!confirm('Delete this item?')) return;
+    let items = getStorageData(module);
+    items = items.filter(item => item.id !== parseInt(id));
+    saveStorageData(module, items);
+    refresh();
+  }
+
+  function refresh() {
+    refreshDashboard();
+    refreshTasks();
+    refreshInvoices();
+    refreshGoals();
+    refreshSchedule();
+    refreshFinance();
+    refreshGym();
+    refreshNotes();
+    refreshTime();
+    refreshClients();
+    refreshNutrition();
+    refreshFaith();
+    refreshHealth();
+    refreshRelationships();
+    refreshLearning();
+    refreshProgress();
+  }
+
+  // ========== GENERIC LIST RENDERER ==========
+  function renderList(module, items, renderer) {
+    const config = MODULE_CONFIG[module];
+    const container = document.getElementById(`${module}-list`);
+
+    if (!items || items.length === 0) {
+      container.innerHTML = `<p style="color:var(--ink-3);font-size:13px;">${config.emptyMsg}</p>`;
+      return;
+    }
+
+    const sorted = items.sort(config.sort);
+    let html = '';
+    sorted.forEach(item => {
+      html += renderer(item);
+    });
+    container.innerHTML = html;
+  }
+
+  // ========== SPECIFIC RENDERERS ==========
+  function renderTaskItem(task) {
+    const opacity = task.done ? 'opacity:0.6' : '';
+    const strikethrough = task.done ? 'text-decoration:line-through' : '';
+    const checked = task.done ? 'checked' : '';
+    const dateRange = task.start && task.start !== task.date ? `${task.start} → ${task.date}` : task.date;
+    return `<div class="item" style="${opacity}">
+      <div class="item-left" style="display:flex;gap:10px;align-items:center;">
+        <input type="checkbox" ${checked} onchange="toggleTask('${task.id}')" style="cursor:pointer;width:18px;height:18px;">
+        <div>
+          <div class="item-title" style="${strikethrough}">${task.desc}</div>
+          <div class="item-meta">${task.cat} · ${dateRange}</div>
+        </div>
+      </div>
+      <span class="pill ${task.priority}">${task.priority}</span>
+      <button class="btn-small" title="Edit" onclick="editItem('tasks','${task.id}')" style="color:var(--accent);"><i class="ti ti-pencil"></i></button>
+      <button class="btn-small" onclick="deleteItem('tasks','${task.id}')"><i class="ti ti-trash"></i></button>
+    </div>`;
+  }
+
+  function renderInvoiceItem(inv) {
+    const tax = parseFloat(inv.tax || 0);
+    const taxAmount = (inv.amount * tax) / 100;
+    const total = inv.amount + taxAmount;
+    const taxDisplay = tax > 0 ? ` + ${tax.toFixed(1)}% tax` : '';
+    return `<div class="item">
+      <div class="item-left">
+        <div class="item-title">${inv.num} · ${inv.client}</div>
+        <div class="item-meta">${formatCurrency(inv.amount)}${taxDisplay} = ${formatCurrency(total)} · Due ${inv.due}</div>
+      </div>
+      <span class="pill ${inv.status === 'paid' ? 'low' : inv.status === 'overdue' ? 'high' : 'med'}"
+        style="cursor:pointer;" onclick="toggleInvoiceStatus('${inv.id}')" title="Click to change status">${inv.status}</span>
+      <button class="btn-small" title="Edit" onclick="editItem('invoices','${inv.id}')" style="color:var(--accent);"><i class="ti ti-pencil"></i></button>
+      <button class="btn-small" onclick="deleteItem('invoices','${inv.id}')"><i class="ti ti-trash"></i></button>
+    </div>`;
+  }
+
+  function renderGoalItem(goal) {
+    const pct = Math.round((goal.current / goal.target) * 100);
+    const deadline = goal.deadline ? 'Due ' + goal.deadline : '';
+    const fillWidth = Math.min(pct, 100);
+    return `<div style="margin-bottom:16px;background:var(--surface-2);padding:12px;border-radius:var(--radius-sm);">
+      <div style="display:flex;justify-content:space-between;margin-bottom:8px;align-items:center;">
+        <div>
+          <strong>${goal.name}</strong><br>
+          <small style="color:var(--ink-3);">${goal.type} · ${deadline}</small>
+        </div>
+        <button class="btn-small" onclick="deleteItem('goals','${goal.id}')"><i class="ti ti-trash"></i></button>
+      </div>
+      <div style="display:flex;gap:8px;margin-bottom:8px;font-size:12px;">
+        <input type="number" value="${goal.current.toFixed(2)}" onchange="updateGoal('${goal.id}','current',this.value)" style="width:80px;padding:4px;">
+        <span>/</span>
+        <input type="number" value="${goal.target.toFixed(2)}" onchange="updateGoal('${goal.id}','target',this.value)" style="width:80px;padding:4px;">
+        <span>€</span>
+      </div>
+      <div class="progress"><div class="progress-fill" style="width:${fillWidth}%;background:var(--accent);"></div></div>
+      <small style="color:var(--ink-3);margin-top:4px;display:block;">${pct}% complete</small>
+    </div>`;
+  }
+
+  function renderScheduleItem(block) {
+    const [h, m] = block.time.split(':').map(Number);
+    const endH = Math.floor(h + block.duration);
+    const endM = Math.round((block.duration % 1) * 60);
+    const endTime = String(endH).padStart(2, '0') + ':' + String(endM).padStart(2, '0');
+    return `<div class="item">
+      <div class="item-left">
+        <div class="item-title">${block.title}</div>
+        <div class="item-meta"><strong>${block.day}</strong> · ${block.time}–${endTime} (${block.duration}h)</div>
+      </div>
+      <button class="btn-small" onclick="deleteItem('schedule','${block.id}')"><i class="ti ti-trash"></i></button>
+    </div>`;
+  }
+
+  function renderFinanceItem(fin) {
+    const color = fin.type === 'income' ? 'var(--green)' : 'var(--red)';
+    return `<div class="item">
+      <div class="item-left">
+        <div class="item-title">${fin.desc}</div>
+        <div class="item-meta">${fin.cat} · ${fin.date}</div>
+      </div>
+      <span style="color:${color};">${formatCurrency(fin.amount)}</span>
+      <button class="btn-small" title="Edit" onclick="editItem('finance','${fin.id}')" style="color:var(--accent);"><i class="ti ti-pencil"></i></button>
+      <button class="btn-small" onclick="deleteItem('finance','${fin.id}')"><i class="ti ti-trash"></i></button>
+    </div>`;
+  }
+
+  function renderGymItem(session) {
+    return `<div class="item">
+      <div class="item-left">
+        <div class="item-title">${session.type}</div>
+        <div class="item-meta">${session.date} · ${session.duration} mins</div>
+      </div>
+      <button class="btn-small" onclick="deleteItem('gym','${session.id}')"><i class="ti ti-trash"></i></button>
+    </div>`;
+  }
+
+  function renderNoteItem(note) {
+    return `<div class="item">
+      <div class="item-left">
+        <div class="item-title">${note.title}</div>
+        <div class="item-meta">${note.type} · ${note.date}</div>
+      </div>
+      <button class="btn-small" title="Edit" onclick="editItem('notes','${note.id}')" style="color:var(--accent);"><i class="ti ti-pencil"></i></button>
+      <button class="btn-small" onclick="deleteItem('notes','${note.id}')"><i class="ti ti-trash"></i></button>
+    </div>`;
+  }
+
+  function renderTimeItem(entry) {
+    return `<div class="item">
+      <div class="item-left">
+        <div class="item-title">${entry.client}</div>
+        <div class="item-meta">${entry.date}</div>
+      </div>
+      <div style="font-weight:600;color:var(--accent);">${entry.hours}h</div>
+    </div>`;
+  }
+
+  function renderNutritionItem(nutrition) {
+    const moodEmoji = { energized: '🥊', good: '😊', neutral: '😐', sluggish: '😴' };
+    const emoji = moodEmoji[nutrition.mood] || '😐';
+    return `<div class="item">
+      <div class="item-left">
+        <div class="item-title">${nutrition.type}: ${nutrition.desc}</div>
+        <div class="item-meta">${nutrition.date} · ${emoji}</div>
+      </div>
+      <button class="btn-small" title="Edit" onclick="editItem('nutrition','${nutrition.id}')" style="color:var(--accent);"><i class="ti ti-pencil"></i></button>
+      <button class="btn-small" onclick="deleteItem('nutrition','${nutrition.id}')"><i class="ti ti-trash"></i></button>
+    </div>`;
+  }
+
+  function renderFaithItem(faith) {
+    return `<div class="item">
+      <div class="item-left">
+        <div class="item-title">${faith.type}</div>
+        <div class="item-meta">${faith.date} · ${faith.duration} min</div>
+      </div>
+      <button class="btn-small" title="Edit" onclick="editItem('faith','${faith.id}')" style="color:var(--accent);"><i class="ti ti-pencil"></i></button>
+      <button class="btn-small" onclick="deleteItem('faith','${faith.id}')"><i class="ti ti-trash"></i></button>
+    </div>`;
+  }
+
+  function renderHealthItem(health) {
+    return `<div class="item">
+      <div class="item-left">
+        <div class="item-title">${health.cat}</div>
+        <div class="item-meta">${health.date}</div>
+      </div>
+      <span style="font-weight:600;color:var(--accent);">${health.value}</span>
+      <button class="btn-small" title="Edit" onclick="editItem('health','${health.id}')" style="color:var(--accent);"><i class="ti ti-pencil"></i></button>
+      <button class="btn-small" onclick="deleteItem('health','${health.id}')"><i class="ti ti-trash"></i></button>
+    </div>`;
+  }
+
+  function renderRelationshipItem(rel) {
+    return `<div class="item">
+      <div class="item-left">
+        <div class="item-title">${rel.person}</div>
+        <div class="item-meta">${rel.date} · ${rel.activity}</div>
+      </div>
+      <button class="btn-small" title="Edit" onclick="editItem('relationships','${rel.id}')" style="color:var(--accent);"><i class="ti ti-pencil"></i></button>
+      <button class="btn-small" onclick="deleteItem('relationships','${rel.id}')"><i class="ti ti-trash"></i></button>
+    </div>`;
+  }
+
+  function renderLearningItem(learning) {
+    return `<div class="item">
+      <div class="item-left">
+        <div class="item-title">${learning.topic}</div>
+        <div class="item-meta">${learning.date}</div>
+      </div>
+      <span style="font-weight:600;color:var(--accent);">${learning.time}h</span>
+      <button class="btn-small" title="Edit" onclick="editItem('learning','${learning.id}')" style="color:var(--accent);"><i class="ti ti-pencil"></i></button>
+      <button class="btn-small" onclick="deleteItem('learning','${learning.id}')"><i class="ti ti-trash"></i></button>
+    </div>`;
+  }
+
+  function renderProgressCard(period, stats) {
+    const pctTask = stats.tasks.total > 0 ? Math.round((stats.tasks.completed / stats.tasks.total) * 100) : 0;
+    const periodLabel = { daily: 'Today', weekly: 'This Week', monthly: 'This Month', yearly: 'This Year' }[period] || period;
+
+    return `<div style="background:var(--surface-2);border:1px solid var(--line);border-radius:var(--radius);padding:16px;margin-bottom:14px;">
+      <div style="font-weight:600;margin-bottom:12px;color:var(--ink);">${periodLabel}</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
+        <div>
+          <div style="font-size:11px;color:var(--ink-3);margin-bottom:4px;">Tasks</div>
+          <div style="font-size:20px;font-weight:700;color:var(--accent);">${stats.tasks.completed}/${stats.tasks.total}</div>
+          <div class="progress" style="margin-top:6px;"><div class="progress-fill" style="width:${pctTask}%;background:var(--accent);"></div></div>
+        </div>
+        <div>
+          <div style="font-size:11px;color:var(--ink-3);margin-bottom:4px;">Hours</div>
+          <div style="font-size:20px;font-weight:700;color:var(--green);">${stats.hours.toFixed(1)}h</div>
+          <div style="font-size:11px;color:var(--ink-3);margin-top:8px;">tracked</div>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;">
+        <div style="background:var(--surface);padding:10px;border-radius:var(--radius-sm);">
+          <div style="font-size:10px;color:var(--ink-3);">Income</div>
+          <div style="font-size:16px;font-weight:700;color:var(--green);">${formatCurrency(stats.income)}</div>
+        </div>
+        <div style="background:var(--surface);padding:10px;border-radius:var(--radius-sm);">
+          <div style="font-size:10px;color:var(--ink-3);">Expenses</div>
+          <div style="font-size:16px;font-weight:700;color:var(--red);">${formatCurrency(stats.expenses)}</div>
+        </div>
+        <div style="background:var(--surface);padding:10px;border-radius:var(--radius-sm);">
+          <div style="font-size:10px;color:var(--ink-3);">Invoices</div>
+          <div style="font-size:16px;font-weight:700;color:var(--accent);">${formatCurrency(stats.invoices)}</div>
+        </div>
+      </div>
+    </div>`;
+  }
+
+  function renderClientItem(client) {
+    return `<div class="item">
+      <div class="item-left">
+        <div class="item-title">${client.name}</div>
+        <div class="item-meta">${client.email ? client.email : ''} · ${formatCurrency(client.rate)}/h · ${client.terms}</div>
+      </div>
+      <button class="btn-small" title="Edit" onclick="editItem('clients','${client.id}')" style="color:var(--accent);"><i class="ti ti-pencil"></i></button>
+      <button class="btn-small" onclick="deleteItem('clients','${client.id}')"><i class="ti ti-trash"></i></button>
+    </div>`;
+  }
+
+  // ========== REFRESH FUNCTIONS ==========
+  function refreshTasks() {
+    const tasks = getStorageData('tasks');
+    renderList('tasks', tasks, renderTaskItem);
+  }
+
+  function refreshInvoices() {
+    const invoices = getStorageData('invoices');
+    renderList('invoices', invoices, renderInvoiceItem);
+  }
+
+  function refreshGoals() {
+    const goals = getStorageData('goals');
+    renderList('goals', goals, renderGoalItem);
+  }
+
+  function refreshSchedule() {
+    const schedule = getStorageData('schedule');
+    renderList('schedule', schedule, renderScheduleItem);
+  }
+
+  function refreshFinance() {
+    const finance = getStorageData('finance');
+    const income = finance.filter(f => f.type === 'income').reduce((s, f) => s + f.amount, 0);
+    const expense = finance.filter(f => f.type === 'expense').reduce((s, f) => s + f.amount, 0);
+    document.getElementById('finance-income').textContent = formatCurrency(income);
+    document.getElementById('finance-expense').textContent = formatCurrency(expense);
+    renderList('finance', finance, renderFinanceItem);
+  }
+
+  function refreshGym() {
+    const gym = getStorageData('gym');
+    renderList('gym', gym, renderGymItem);
+  }
+
+  function refreshNotes() {
+    const notes = getStorageData('notes');
+    renderList('notes', notes, renderNoteItem);
+  }
+
+  function refreshTime() {
+    const time = getStorageData('time').slice(0, 20);
+    renderList('time', time, renderTimeItem);
+  }
+
+  function refreshNutrition() {
+    const nutrition = getStorageData('nutrition');
+    renderList('nutrition', nutrition, renderNutritionItem);
+  }
+
+  function refreshFaith() {
+    const faith = getStorageData('faith');
+    const totalMin = faith.reduce((s, f) => s + f.duration, 0);
+    const timeEl = document.getElementById('faith-total');
+    if (timeEl) timeEl.textContent = totalMin + ' min';
+    renderList('faith', faith, renderFaithItem);
+  }
+
+  function refreshHealth() {
+    const health = getStorageData('health');
+    renderList('health', health, renderHealthItem);
+  }
+
+  function refreshRelationships() {
+    const relationships = getStorageData('relationships');
+    renderList('relationships', relationships, renderRelationshipItem);
+  }
+
+  function refreshLearning() {
+    const learning = getStorageData('learning');
+    const totalHours = learning.reduce((s, l) => s + l.time, 0);
+    const timeEl = document.getElementById('learning-total');
+    if (timeEl) timeEl.textContent = totalHours.toFixed(1) + 'h';
+    renderList('learning', learning, renderLearningItem);
+  }
+
+  function refreshProgress() {
+    const progressContainer = document.getElementById('progress-container');
+    if (!progressContainer) return;
+
+    const dailyStats = getProgressStats('daily');
+    const weeklyStats = getProgressStats('weekly');
+    const monthlyStats = getProgressStats('monthly');
+    const yearlyStats = getProgressStats('yearly');
+
+    let html = '<div style="display:grid;grid-template-columns:1fr;gap:14px;">';
+    html += renderProgressCard('daily', dailyStats);
+    html += renderProgressCard('weekly', weeklyStats);
+    html += renderProgressCard('monthly', monthlyStats);
+    html += renderProgressCard('yearly', yearlyStats);
+    html += '</div>';
+
+    progressContainer.innerHTML = html;
+  }
+
+  function getClientEarnings(clientName, invoices) {
+    return invoices.filter(inv => inv.client === clientName).reduce((sum, inv) => sum + inv.amount, 0);
+  }
+
+  // Progress Tracking Functions
+  function getDateRange(period) {
+    const today = new Date();
+    const startDate = new Date();
+    const endDate = new Date();
+
+    switch(period) {
+      case 'daily':
+        startDate.setHours(0, 0, 0, 0);
+        endDate.setHours(23, 59, 59, 999);
+        break;
+      case 'weekly':
+        const day = today.getDay();
+        startDate.setDate(today.getDate() - day);
+        startDate.setHours(0, 0, 0, 0);
+        endDate.setDate(startDate.getDate() + 6);
+        endDate.setHours(23, 59, 59, 999);
+        break;
+      case 'monthly':
+        startDate.setDate(1);
+        startDate.setHours(0, 0, 0, 0);
+        endDate.setMonth(today.getMonth() + 1, 0);
+        endDate.setHours(23, 59, 59, 999);
+        break;
+      case 'yearly':
+        startDate.setMonth(0, 1);
+        startDate.setHours(0, 0, 0, 0);
+        endDate.setMonth(11, 31);
+        endDate.setHours(23, 59, 59, 999);
+        break;
+    }
+
+    return { startDate, endDate };
+  }
+
+  function getProgressStats(period) {
+    const { startDate, endDate } = getDateRange(period);
+    const tasks = getStorageData('tasks').filter(t => new Date(t.date) >= startDate && new Date(t.date) <= endDate);
+    const invoices = getStorageData('invoices').filter(inv => new Date(inv.date) >= startDate && new Date(inv.date) <= endDate);
+    const finance = getStorageData('finance').filter(f => new Date(f.date) >= startDate && new Date(f.date) <= endDate);
+    const time = getStorageData('time').filter(t => new Date(t.date) >= startDate && new Date(t.date) <= endDate);
+    const gym = getStorageData('gym').filter(g => new Date(g.date) >= startDate && new Date(g.date) <= endDate);
+
+    const income = finance.filter(f => f.type === 'income').reduce((s, f) => s + f.amount, 0);
+    const expenses = finance.filter(f => f.type === 'expense').reduce((s, f) => s + f.amount, 0);
+    const invoiceTotal = invoices.reduce((s, i) => s + i.amount, 0);
+    const completedTasks = tasks.filter(t => t.done).length;
+    const totalHours = time.reduce((s, t) => s + t.hours, 0);
+    const gymSessions = gym.length;
+
+    return {
+      tasks: { completed: completedTasks, total: tasks.length },
+      income,
+      expenses,
+      invoices: invoiceTotal,
+      hours: totalHours,
+      gymSessions,
+      startDate: startDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+      endDate: endDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+    };
+  }
+
+  function refreshClients() {
+    const invoices = getStorageData('invoices');
+    const time = getStorageData('time');
+    const clients = getStorageData('clients');
+
+    const totalInvoices = invoices.length;
+    const totalTime = time.reduce((s, t) => s + t.hours, 0);
+    const totalEarned = invoices.reduce((s, i) => s + i.amount, 0);
+    const avgRate = totalTime > 0 ? Math.round(totalEarned / totalTime) : 0;
+
+    const statsEl = document.getElementById('clients-stats');
+    if (statsEl) {
+      statsEl.innerHTML = `
+        <div class="stat"><div class="stat-label">Total earned</div><div class="stat-value">${formatCurrency(totalEarned)}</div></div>
+        <div class="stat"><div class="stat-label">Avg rate</div><div class="stat-value">${formatCurrency(avgRate)}/h</div></div>
+        <div class="stat"><div class="stat-label">Hours tracked</div><div class="stat-value">${totalTime.toFixed(1)}h</div></div>
+        <div class="stat"><div class="stat-label">Clients</div><div class="stat-value">${clients.length}</div></div>
+      `;
+    }
+
+    let clientsWithEarnings = clients.map(c => ({
+      ...c,
+      earnings: getClientEarnings(c.name, invoices)
+    }));
+
+    let html = '';
+    clientsWithEarnings.forEach(client => {
+      html += `<div class="item">
+        <div class="item-left">
+          <div class="item-title">${client.name}</div>
+          <div class="item-meta">${client.email || 'N/A'} · ${formatCurrency(client.rate)}/h · ${client.terms}</div>
+        </div>
+        <div style="text-align:right;">
+          <div style="font-weight:600;color:var(--green);">${formatCurrency(client.earnings)}</div>
+          <div style="font-size:11px;color:var(--ink-3);">earned</div>
+        </div>
+        <button class="btn-small" title="Edit" onclick="editItem('clients','${client.id}')" style="color:var(--accent);"><i class="ti ti-pencil"></i></button>
+        <button class="btn-small" onclick="deleteItem('clients','${client.id}')"><i class="ti ti-trash"></i></button>
+      </div>`;
+    });
+    document.getElementById('clients-list').innerHTML = html || '<p style="color:var(--ink-3);font-size:13px;">No clients yet. Add one to get started.</p>';
+
+    let clientSelect = '<option value="">No client</option>';
+    clients.forEach(c => {
+      clientSelect += `<option value="${c.name}">${c.name} (${formatCurrency(c.rate)}/h)</option>`;
+    });
+    const timerSelect = document.getElementById('timer-client-select');
+    if (timerSelect) timerSelect.innerHTML = clientSelect;
+  }
+
+  // ========== DASHBOARD ==========
+  function refreshDashboard() {
+    const invoices = getStorageData('invoices');
+    const finance = getStorageData('finance');
+    const time = getStorageData('time');
+    const clients = getStorageData('clients');
+
+    const income = finance.filter(f => f.type === 'income').reduce((s, f) => s + f.amount, 0);
+    const pct = Math.round((income / userData.target) * 100);
+    document.getElementById('dash-earned').textContent = formatCurrency(income);
+    document.getElementById('dash-progress').textContent = pct + '% of ' + formatCurrency(userData.target);
+
+    const totalHours = time.reduce((s, t) => s + t.hours, 0);
+    const totalInvoiced = invoices.reduce((s, i) => s + i.amount, 0);
+    const hourlyRate = totalHours > 0 ? Math.round(totalInvoiced / totalHours) : 0;
+    document.getElementById('dash-hourly').textContent = formatCurrency(hourlyRate) + '/h';
+    document.getElementById('dash-hours').textContent = totalHours.toFixed(1) + 'h tracked';
+
+    const openInv = invoices.filter(i => i.status !== 'paid').length;
+    const invAmount = invoices.filter(i => i.status !== 'paid').reduce((s, i) => s + i.amount, 0);
+    document.getElementById('dash-invoices').textContent = openInv;
+    document.getElementById('dash-inv-amt').textContent = formatCurrency(invAmount) + ' outstanding';
+
+    const today = new Date();
+    const overdueInv = invoices.filter(i => i.status !== 'paid' && new Date(i.due) < today);
+    const overdueAmt = overdueInv.reduce((s, i) => s + i.amount, 0);
+    document.getElementById('dash-overdue').textContent = overdueInv.length;
+    document.getElementById('dash-overdue-amt').textContent = formatCurrency(overdueAmt) + ' at risk';
+
+    document.getElementById('dash-total-earned').textContent = totalInvoiced.toFixed(0);
+    document.getElementById('dash-total-hours').textContent = totalHours.toFixed(1);
+    document.getElementById('dash-your-rate').textContent = hourlyRate;
+    document.getElementById('dash-clients-count').textContent = clients.length;
+
+    // Today's tasks
+    const tasks = getStorageData('tasks');
+    const todayTasks = tasks.filter(t => t.date === defaultDate);
+    let html = '';
+    todayTasks.forEach(t => {
+      const opacity = t.done ? 'opacity:0.6' : '';
+      const strikethrough = t.done ? 'text-decoration:line-through' : '';
+      const checked = t.done ? 'checked' : '';
+      html += `<div class="item" style="${opacity}"><div class="item-left" style="display:flex;gap:10px;align-items:center;"><input type="checkbox" ${checked} onchange="toggleTask('${t.id}')" style="cursor:pointer;width:18px;height:18px;"><div><div class="item-title" style="${strikethrough}">${t.desc}</div></div></div><span class="pill ${t.priority}">${t.priority}</span><button class="btn-small" onclick="deleteItem('tasks','${t.id}')"><i class="ti ti-trash"></i></button></div>`;
+    });
+    document.getElementById('dash-task-list').innerHTML = html || '<p style="color:var(--ink-3);font-size:13px;">No tasks for today</p>';
+  }
+
+  // ========== SPECIAL HANDLERS ==========
+  function toggleTask(id) {
+    let tasks = getStorageData('tasks');
+    const task = tasks.find(t => t.id === parseInt(id));
+    if (task) task.done = !task.done;
+    saveStorageData('tasks', tasks);
+    refresh();
+  }
+
+  function toggleInvoiceStatus(id) {
+    let invoices = getStorageData('invoices');
+    const invoice = invoices.find(i => i.id === parseInt(id));
+    if (invoice) {
+      invoice.status = invoice.status === 'paid' ? 'unpaid' : invoice.status === 'unpaid' ? 'pending' : 'paid';
+    }
+    saveStorageData('invoices', invoices);
+    refresh();
+  }
+
+  function updateGoal(id, field, value) {
+    let goals = getStorageData('goals');
+    const goal = goals.find(g => g.id === parseInt(id));
+    if (goal) {
+      goal[field] = parseFloat(value) || 0;
+      goal.progress = Math.round((goal.current / goal.target) * 100);
+    }
+    saveStorageData('goals', goals);
+    refresh();
+  }
+
+  function updateBlockPreview() {
+    const day = document.getElementById('schedule-day').value;
+    const time = document.getElementById('schedule-time').value;
+    const duration = parseFloat(document.getElementById('schedule-duration').value) || 0;
+    if (time && duration) {
+      const [h, m] = time.split(':').map(Number);
+      const endH = Math.floor(h + duration);
+      const endM = Math.round((duration % 1) * 60);
+      const endTime = String(endH).padStart(2, '0') + ':' + String(endM).padStart(2, '0');
+      document.getElementById('preview-text').textContent = `${day} · ${time}-${endTime} (${duration}h)`;
+      document.getElementById('schedule-preview').style.display = 'block';
+    } else {
+      document.getElementById('schedule-preview').style.display = 'none';
+    }
+  }
+
+  // ========== TIME TRACKING ==========
+  let timerInterval = null;
+  let timerSeconds = 0;
+
+  function toggleTimer() {
+    if (timerInterval) {
+      clearInterval(timerInterval);
+      timerInterval = null;
+      document.getElementById('timer-btn').textContent = 'Resume';
+    } else {
+      timerInterval = setInterval(() => {
+        timerSeconds++;
+        const h = Math.floor(timerSeconds / 3600);
+        const m = Math.floor((timerSeconds % 3600) / 60);
+        const s = timerSeconds % 60;
+        document.getElementById('timer-display').textContent = String(h).padStart(2, '0') + ':' + String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0');
+      }, 1000);
+      document.getElementById('timer-btn').textContent = 'Stop';
+    }
+  }
+
+  function resetTimer() {
+    if (timerInterval) clearInterval(timerInterval);
+    timerInterval = null;
+    timerSeconds = 0;
+    document.getElementById('timer-display').textContent = '00:00:00';
+    document.getElementById('timer-btn').textContent = 'Start';
+  }
+
+  function updateTimerClient() {
+    const client = document.getElementById('timer-client-select').value;
+    document.getElementById('timer-client').textContent = client ? 'Tracking for: ' + client : '';
+  }
+
+  function saveTimeEntry() {
+    if (timerSeconds === 0) {
+      alert('Start the timer first');
+      return;
+    }
+    const client = document.getElementById('timer-client-select').value || 'Billable work';
+    const hours = timerSeconds / 3600;
+    const time = getStorageData('time');
+    time.push({ id: Date.now(), client, hours: parseFloat(hours.toFixed(2)), date: defaultDate });
+    saveStorageData('time', time);
+    alert('Time entry saved: ' + hours.toFixed(2) + 'h for ' + client);
+    resetTimer();
+    refresh();
+  }
+
+  // ========== APP INITIALIZATION ==========
+  function initApp() {
+    const saved = localStorage.getItem('dashWale_User');
+    if (saved) {
+      userData = JSON.parse(saved);
+    } else {
+      userData = {
+        name: 'Wale',
+        studio: 'Wale OS',
+        target: 5000,
+        email: 'wale@example.com',
+        logo: '',
+        currency: 'EUR'
+      };
+      localStorage.setItem('dashWale_User', JSON.stringify(userData));
+      loadFirebaseData();
+    }
+    renderApp();
+  }
+
+  function loadFirebaseData() {
+    // Load Firebase Finance data
+    const firebaseFinance = [
+      { id: 1780816958886, amount: 10, cat: "Food", date: "2026-06-07", desc: "Grocery", type: "expense" },
+      { id: 1780757710819, amount: 19, cat: "Food", date: "2026-06-06", desc: "Groceries", type: "expense" },
+      { id: 1780652320077, amount: 15, cat: "Software", date: "2026-06-05", desc: "Magnetic Subscription", type: "expense" },
+      { id: 1780649118709, amount: 13, cat: "Food", date: "2026-06-05", desc: "Groceries", type: "expense" },
+      { id: 1780561553409, amount: 19, cat: "Food", date: "2026-06-04", desc: "Chopstick", type: "expense" },
+      { id: 1780517673364, amount: 20, cat: "Food", date: "2026-06-02", desc: "Hesburger", type: "expense" },
+      { id: 1780517643171, amount: 156, cat: "Other income", date: "2026-06-02", desc: "Naira exchange", type: "income" },
+      { id: 1780430306117, amount: 2.2, cat: "Food", date: "2026-06-02", desc: "Water at the Gym", type: "expense" },
+      { id: 1780416994175, amount: 20, cat: "Gym", date: "2026-06-02", desc: "Gym membership", type: "expense" },
+      { id: 1780397462451, amount: 16, cat: "Transport", date: "2026-06-02", desc: "Bolt", type: "expense" },
+      { id: 1780397335023, amount: 8, cat: "Food", date: "2026-06-02", desc: "Fruit", type: "expense" },
+      { id: 1780304659704, amount: 8, cat: "Software", date: "2026-06-01", desc: "MetLife Subscription", type: "expense" },
+      { id: 1780300107821, amount: 39, cat: "Other expense", date: "2026-06-01", desc: "Gift", type: "expense" }
+    ];
+
+    // Load Firebase Gym data
+    const firebaseGym = [
+      { id: 1780768442352, type: "Lower", duration: 60, date: "2026-06-06", notes: "Leg day" },
+      { id: 1780683420207, type: "Upper", duration: 60, date: "2026-06-05", notes: "Biceps and shoulders workout" },
+      { id: 1780420203755, type: "Pull", duration: 90, date: "2026-06-02", notes: "Energetic" },
+      { id: 1780339924909, type: "Push", duration: 80, date: "2026-06-01", notes: "" }
+    ];
+
+    // Load Firebase Tasks data
+    const firebaseTasks = [
+      { id: 1780683385290, desc: "[Schedule] 4:00 – 5:30pm — Weekly review", date: "05/06/2026", done: true, cat: "admin", pri: "med" },
+      { id: 1780683382835, desc: "[Schedule] 2:00 – 4:00pm — Deliver client work", date: "05/06/2026", done: true, cat: "client", pri: "med" },
+      { id: 1780572683469, desc: "[Schedule] 11:00am – 1pm — Outreach + follow up", date: "6/4/2026", done: true, cat: "outreach", pri: "med" },
+      { id: 1780510136825, desc: "[Schedule] 2:00 – 5:30pm — Deep work", date: "03/06/2026", done: true, cat: "client", pri: "med" },
+      { id: 1780510131826, desc: "[Schedule] 9:00 – 11:00am — MyndZone Website", date: "03/06/2026", done: true, cat: "admin", pri: "med" }
+    ];
+
+    localStorage.setItem('dashWale_Finance', JSON.stringify(firebaseFinance));
+    localStorage.setItem('dashWale_Gym', JSON.stringify(firebaseGym));
+    localStorage.setItem('dashWale_Tasks', JSON.stringify(firebaseTasks));
+    localStorage.setItem('dashWale_enabledInsights', JSON.stringify({ time: true, clients: true, finance: true, gym: true, nutrition: false, faith: false, health: false, relationships: false, learning: false }));
+    setTimeout(() => refresh(), 100);
+  }
+
+  function getTimeBasedGreeting() {
+    const hour = new Date().getHours();
+    if (hour >= 5 && hour < 12) return 'Good morning';
+    if (hour >= 12 && hour < 17) return 'Good afternoon';
+    if (hour >= 17 && hour < 21) return 'Good evening';
+    return 'Good night';
+  }
+
+  function renderApp() {
+    document.getElementById('user-name').textContent = userData.name;
+    document.getElementById('greeting-text').textContent = getTimeBasedGreeting();
+    const today = new Date();
+    document.getElementById('greet-date').textContent = today.toLocaleDateString('en-US', {
+      weekday: 'long',
+      month: 'long',
+      day: 'numeric',
+      year: 'numeric',
+    });
+    const initials = userData.name.split(' ').map(w => w[0]).join('').toUpperCase();
+    document.getElementById('avatar').textContent = initials;
+    const currencyEl = document.getElementById('currency-select');
+    if (currencyEl) currencyEl.value = userData.currency || 'EUR';
+    initInsights();
+    updateCurrencyDisplay();
+  }
+
+  function switchSection(sec) {
+    document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    document.getElementById(sec).classList.add('active');
+    const navItem = document.querySelector(`.nav-item[onclick="switchSection('${sec}')"]`);
+    if (navItem) navItem.classList.add('active');
+  }
+
+  function openSettings() {
+    const studio = prompt('Studio name:', userData.studio);
+    if (studio !== null) {
+      userData.studio = studio;
+      localStorage.setItem('dashWale_User', JSON.stringify(userData));
+    }
+  }
+
+  function initInsights() {
+    const enabledInsights = JSON.parse(
+      localStorage.getItem('enabledInsights') ||
+      '{"time":true,"clients":true,"finance":true,"gym":true,"nutrition":false,"faith":false,"health":false,"relationships":false,"learning":false}'
+    );
+    localStorage.setItem('enabledInsights', JSON.stringify(enabledInsights));
+    refreshInsightsSettings();
+    updateInsightsSidebar();
+  }
+
+  function refreshInsightsSettings() {
+    const enabledInsights = JSON.parse(localStorage.getItem('enabledInsights') || '{}');
+    const insights = [
+      { id: 'time', label: 'Time Tracking', desc: 'Track billable hours', icon: 'ti-clock' },
+      { id: 'clients', label: 'Clients', desc: 'Client earnings & rates', icon: 'ti-users' },
+      { id: 'finance', label: 'Finance', desc: 'Income & expenses', icon: 'ti-wallet' },
+      { id: 'gym', label: 'Gym', desc: 'Fitness & workouts', icon: 'ti-barbell' },
+      { id: 'nutrition', label: 'Nutrition', desc: 'Meals & eating patterns', icon: 'ti-apple' },
+      { id: 'faith', label: 'Faith', desc: 'Prayer & spirituality', icon: 'ti-sparkles' },
+      { id: 'health', label: 'Health', desc: 'Sleep, mood, wellness', icon: 'ti-heart-pulse' },
+      { id: 'relationships', label: 'Relationships', desc: 'Connections & moments', icon: 'ti-handshake' },
+      { id: 'learning', label: 'Learning', desc: 'Skills & personal growth', icon: 'ti-brain' },
+    ];
+    let html = '';
+    insights.forEach(i => {
+      const checked = enabledInsights[i.id] ? 'checked' : '';
+      const iconClass = i.icon ? `ti ${i.icon}` : '';
+      const iconHtml = i.icon ? `<i class="${iconClass}" style="font-size:20px;opacity:0.85;"></i>` : '';
+      html += `<label style="display:flex;align-items:center;gap:10px;padding:10px;border-radius:var(--radius-sm);cursor:pointer;background:var(--surface-2);">
+        <input type="checkbox" ${checked} onchange="toggleInsight('${i.id}',this.checked)" style="width:18px;height:18px;cursor:pointer;">
+        ${iconHtml}
+        <div><div style="font-weight:600;font-size:13px;">${i.label}</div><div style="font-size:12px;color:var(--ink-3);">${i.desc}</div></div>
+      </label>`;
+    });
+    document.getElementById('insights-toggles').innerHTML = html;
+  }
+
+  function toggleInsight(id, enabled) {
+    const enabledInsights = JSON.parse(localStorage.getItem('enabledInsights') || '{}');
+    enabledInsights[id] = enabled;
+    localStorage.setItem('enabledInsights', JSON.stringify(enabledInsights));
+    updateInsightsSidebar();
+  }
+
+  function updateInsightsSidebar() {
+    const enabledInsights = JSON.parse(localStorage.getItem('enabledInsights') || '{}');
+    const toggleableModules = ['time', 'clients', 'finance', 'gym', 'nutrition', 'faith', 'health', 'relationships', 'learning'];
+    const alwaysEnabledModules = ['progress'];
+
+    // Handle toggleable modules
+    toggleableModules.forEach(id => {
+      const section = document.getElementById(id);
+      const navItem = document.querySelector(`.nav-item[onclick="switchSection('${id}')"]`);
+
+      if (section) section.style.display = enabledInsights[id] ? 'block' : 'none';
+      if (navItem) navItem.style.display = enabledInsights[id] ? 'flex' : 'none';
+    });
+
+    // Progress is always enabled
+    alwaysEnabledModules.forEach(id => {
+      const section = document.getElementById(id);
+      const navItem = document.querySelector(`.nav-item[onclick="switchSection('${id}')"]`);
+      if (section) section.style.display = 'block';
+      if (navItem) navItem.style.display = 'flex';
+    });
+  }
+
+  function changeCurrency(newCurrency) {
+    userData.currency = newCurrency;
+    localStorage.setItem('dashWale_User', JSON.stringify(userData));
+    document.getElementById('currency-select').value = newCurrency;
+    updateCurrencyDisplay();
+  }
+
+  function updateCurrencyDisplay() {
+    const symbol = currencySymbols[userData.currency] || '€';
+    document.querySelectorAll('[data-currency]').forEach(el => {
+      el.textContent = el.textContent.replace(/[€$£₦]/g, symbol);
+    });
+    document.getElementById('invoices-amount-label').textContent = `Amount (${symbol})`;
+    document.getElementById('finance-amount-label').textContent = `Amount (${symbol})`;
+    document.getElementById('clients-rate-label').textContent = `Hourly rate (${symbol})`;
+    document.getElementById('goals-target-label').textContent = `Target amount (${symbol})`;
+    document.getElementById('goals-current-label').textContent = `Current amount (${symbol})`;
+    document.getElementById('finance-amount').placeholder = symbol + '0.00';
+    refresh();
+  }
+
+  async function scanReceipt(fileInput) {
+    if (!fileInput.files || fileInput.files.length === 0) return;
+
+    const file = fileInput.files[0];
+    const statusDiv = document.getElementById('ocr-status');
+    statusDiv.style.display = 'block';
+    statusDiv.textContent = '📸 Processing receipt...';
+
+    try {
+      const reader = new FileReader();
+      reader.onload = async (e) => {
+        try {
+          statusDiv.textContent = '🔍 Reading text from image...';
+          const result = await Tesseract.recognize(e.target.result, 'eng', {
+            logger: (m) => {
+              if (m.status === 'recognizing text') {
+                statusDiv.textContent = `🔍 Reading... ${Math.round(m.progress * 100)}%`;
+              }
+            }
+          });
+
+          const text = result.data.text;
+          const parsed = parseReceiptData(text);
+
+          statusDiv.style.display = 'none';
+          openForm('finance');
+
+          if (parsed.amount) {
+            document.getElementById('finance-amount').value = parsed.amount;
+          }
+          if (parsed.merchant) {
+            document.getElementById('finance-desc').value = parsed.merchant;
+          }
+          if (parsed.category) {
+            document.getElementById('finance-cat').value = parsed.category;
+          }
+          document.getElementById('finance-type').value = 'expense';
+
+          statusDiv.style.display = 'block';
+          statusDiv.style.background = 'var(--green-soft)';
+          statusDiv.style.color = 'var(--green)';
+          statusDiv.textContent = '✅ Receipt scanned! Review and save below.';
+
+          setTimeout(() => {
+            statusDiv.style.display = 'none';
+          }, 5000);
+        } catch (err) {
+          statusDiv.textContent = '❌ Error: Could not process image';
+          console.error('OCR Error:', err);
+        }
+      };
+      reader.readAsDataURL(file);
+    } catch (err) {
+      statusDiv.textContent = '❌ Error reading file';
+      console.error('File Error:', err);
+    }
+
+    fileInput.value = '';
+  }
+
+  function parseReceiptData(text) {
+    const parsed = { amount: '', merchant: '', category: 'Food' };
+
+    const lines = text.split('\n');
+
+    for (const line of lines) {
+      const trimmed = line.trim();
+
+      if (!parsed.amount) {
+        const amountMatch = trimmed.match(/(?:total|amount|price|cost|due)[\s:]*[\$€]?([\d.,]+)/i);
+        if (amountMatch) {
+          let amount = amountMatch[1].replace(/,/g, '.');
+          amount = parseFloat(amount).toFixed(2);
+          if (!isNaN(amount) && parseFloat(amount) > 0 && parseFloat(amount) < 100000) {
+            parsed.amount = amount;
+          }
+        }
+      }
+
+      if (!parsed.merchant) {
+        if (trimmed.length > 3 && trimmed.length < 50 && !trimmed.match(/^\d/) && trimmed.match(/[a-zA-Z]/)) {
+          const keywords = ['store', 'market', 'shop', 'cafe', 'restaurant', 'pharmacy', 'grocery', 'gas', 'mall'];
+          if (keywords.some(k => trimmed.toLowerCase().includes(k))) {
+            parsed.merchant = trimmed;
+          } else if (trimmed.length < 30 && !trimmed.match(/[€$\d%]/)) {
+            parsed.merchant = trimmed;
+          }
+        }
+      }
+    }
+
+    if (parsed.merchant.toLowerCase().includes('grocery') || parsed.merchant.toLowerCase().includes('store')) {
+      parsed.category = 'Food';
+    } else if (parsed.merchant.toLowerCase().includes('gas') || parsed.merchant.toLowerCase().includes('fuel')) {
+      parsed.category = 'Transport';
+    } else if (parsed.merchant.toLowerCase().includes('pharmacy')) {
+      parsed.category = 'Health';
+    }
+
+    return parsed;
+  }
+
+  initApp();
+</script>
+</body>
+</html>
