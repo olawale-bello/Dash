@@ -54,7 +54,7 @@
     display:flex;flex-direction:column;padding:22px 16px;
     position:sticky;top:0;height:100vh;overflow-y:auto;
   }
-  .hamburger{display:none;background:none;border:none;font-size:24px;cursor:pointer;padding:10px;color:var(--ink);}
+  .hamburger{display:none;background:none;border:none;font-size:28px;cursor:pointer;padding:8px 12px;color:var(--ink);margin-right:auto;z-index:100;flex-shrink:0;}
   .sidebar-overlay{display:none;}
   .brand{display:flex;align-items:center;gap:10px;padding:0 8px 24px;border-bottom:1px solid rgba(24,95,165,0.1);}
   .brand-logo{display:block;flex-shrink:0;}
@@ -157,7 +157,8 @@
     .upgrade{display:none;}
     .main{padding:12px;}
     .modal{width:95%;padding:16px;}
-    .topbar{padding:0 0 12px 0;margin-bottom:0;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;}
+    .topbar{padding:8px 0 12px 0;margin-bottom:0;display:flex;justify-content:space-between;align-items:center;flex-wrap:nowrap;gap:8px;}
+    .topbar > div:first-child{display:flex;align-items:center;gap:8px;flex:1;}
     .greet{font-size:20px;}
     .greet-date{font-size:12px;}
     .card{padding:12px;margin-bottom:12px;}
@@ -180,11 +181,11 @@
     [style*="display:grid"] { grid-template-columns: 1fr !important; }
   }
   @media(max-width:600px){
-    .hamburger{display:block;}
+    .hamburger{display:block;font-size:26px;}
     .main{padding:10px;}
-    .topbar{padding:6px 0;margin-bottom:8px;gap:6px;}
-    .topbar > div:first-child{width:100%;}
-    .topbar-right{width:100%;justify-content:flex-end;}
+    .topbar{padding:8px 0;margin-bottom:8px;gap:6px;flex-wrap:nowrap;}
+    .topbar > div:first-child{display:flex;align-items:center;gap:8px;flex:1;}
+    .topbar-right{flex-shrink:0;}
     .greet-date{font-size:11px;}
     .greet{font-size:18px;}
     .card{padding:10px;margin-bottom:10px;}
@@ -206,8 +207,10 @@
     .modal-subtitle{font-size:12px;}
   }
   @media(max-width:480px){
+    .hamburger{display:block;font-size:24px;padding:6px 10px;}
     .main{padding:8px;}
-    .topbar{margin-bottom:10px;gap:6px;}
+    .topbar{padding:6px 0;margin-bottom:10px;gap:4px;flex-wrap:nowrap;}
+    .topbar > div:first-child{display:flex;align-items:center;gap:6px;}
     .greet-date{font-size:10px;}
     .greet{font-size:16px;}
     .card{padding:8px;margin-bottom:8px;}
