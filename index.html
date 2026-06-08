@@ -686,6 +686,68 @@
           <div class="card-title">Balance Over Time</div>
           <canvas id="chart-balance" height="140"></canvas>
         </div>
+
+        <!-- Savings Planner -->
+        <div class="card">
+          <div class="card-title"><i class="ti ti-piggy-bank" style="color:var(--green);margin-right:6px;font-size:18px;"></i>Savings Planner</div>
+
+          <!-- 50/30/20 breakdown -->
+          <div style="margin-bottom:20px;">
+            <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--ink-3);margin-bottom:10px;">50 / 30 / 20 Rule — based on your income</div>
+            <div id="budget-rule"></div>
+          </div>
+
+          <div style="height:1px;background:var(--line);margin-bottom:20px;"></div>
+
+          <!-- Savings goal calculator -->
+          <div style="margin-bottom:20px;">
+            <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--ink-3);margin-bottom:10px;">Savings Goal Calculator</div>
+            <div class="form-row">
+              <div class="form-group">
+                <label>Target amount</label>
+                <input id="sav-goal" type="number" placeholder="5000" oninput="calcSavings()">
+              </div>
+              <div class="form-group">
+                <label>Target date</label>
+                <input id="sav-date" type="date" oninput="calcSavings()">
+              </div>
+            </div>
+            <div id="sav-result" style="display:none;background:var(--accent-soft);border-radius:var(--radius-sm);padding:14px;margin-top:4px;">
+              <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;text-align:center;">
+                <div><div style="font-size:18px;font-weight:700;color:var(--accent);" id="sav-monthly">€0</div><div style="font-size:11px;color:var(--ink-3);margin-top:2px;">per month</div></div>
+                <div><div style="font-size:18px;font-weight:700;color:var(--accent);" id="sav-weekly">€0</div><div style="font-size:11px;color:var(--ink-3);margin-top:2px;">per week</div></div>
+                <div><div style="font-size:18px;font-weight:700;color:var(--accent);" id="sav-daily">€0</div><div style="font-size:11px;color:var(--ink-3);margin-top:2px;">per day</div></div>
+              </div>
+              <div style="font-size:12px;color:var(--ink-2);text-align:center;margin-top:10px;" id="sav-months-left"></div>
+            </div>
+          </div>
+
+          <div style="height:1px;background:var(--line);margin-bottom:20px;"></div>
+
+          <!-- Emergency fund -->
+          <div>
+            <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--ink-3);margin-bottom:10px;">Emergency Fund Check</div>
+            <div class="form-row">
+              <div class="form-group">
+                <label>Current savings</label>
+                <input id="emerg-savings" type="number" placeholder="0" oninput="calcEmergency()">
+              </div>
+            </div>
+            <div id="emerg-result" style="display:none;border-radius:var(--radius-sm);padding:14px;">
+              <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+                <i class="ti ti-shield-check" style="font-size:24px;" id="emerg-icon"></i>
+                <div>
+                  <div style="font-weight:700;" id="emerg-months"></div>
+                  <div style="font-size:12px;color:var(--ink-2);" id="emerg-msg"></div>
+                </div>
+              </div>
+              <div style="background:var(--surface-2);border-radius:999px;height:8px;overflow:hidden;">
+                <div id="emerg-bar" style="height:100%;border-radius:999px;transition:width 0.4s;"></div>
+              </div>
+              <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--ink-3);margin-top:4px;"><span>0</span><span>3 months (min)</span><span>6 months (ideal)</span></div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -1847,6 +1909,65 @@
         options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { grid: { color: gridColor }, ticks: { callback: v => sym + v } }, x: { ticks: { maxTicksLimit: 8, maxRotation: 0 }, grid: { display: false } } } },
       });
     }
+
+    // ── 50/30/20 breakdown ────────────────────────────────────────────────────
+    const monthCount  = Math.max(1, last6.filter(m => finance.some(f => (f.date || '').startsWith(m))).length);
+    const avgIncome   = monthlyIncome.reduce((s, v) => s + v, 0) / monthCount;
+    const avgExpense  = monthlyExpense.reduce((s, v) => s + v, 0) / monthCount;
+    const rules = [
+      { label: 'Needs (50%)',    target: avgIncome * 0.5,  actual: avgExpense, color: '#185fa5' },
+      { label: 'Wants (30%)',    target: avgIncome * 0.3,  actual: 0,          color: '#1d9e75', note: 'lifestyle / discretionary' },
+      { label: 'Savings (20%)', target: avgIncome * 0.2,  actual: Math.max(0, avgIncome - avgExpense), color: '#854f0b' },
+    ];
+    document.getElementById('budget-rule').innerHTML = rules.map(r => {
+      const pct   = r.target > 0 ? Math.min(100, Math.round((r.actual / r.target) * 100)) : 0;
+      const over  = r.actual > r.target;
+      const barColor = over && r.label.startsWith('Needs') ? 'var(--red)' : r.color;
+      return `<div style="margin-bottom:12px;">
+        <div style="display:flex;justify-content:space-between;margin-bottom:4px;font-size:13px;">
+          <span style="font-weight:600;">${r.label}</span>
+          <span style="color:var(--ink-2);">${formatCurrency(r.actual)} <span style="color:var(--ink-3);">/ ${formatCurrency(r.target)}</span></span>
+        </div>
+        <div style="background:var(--surface-2);border-radius:999px;height:7px;overflow:hidden;">
+          <div style="width:${pct}%;height:100%;background:${barColor};border-radius:999px;transition:width 0.4s;"></div>
+        </div>
+        ${r.note ? `<div style="font-size:11px;color:var(--ink-3);margin-top:2px;">${r.note}</div>` : ''}
+      </div>`;
+    }).join('');
+  }
+
+  function calcSavings() {
+    const goal    = parseFloat(document.getElementById('sav-goal').value);
+    const dateVal = document.getElementById('sav-date').value;
+    const result  = document.getElementById('sav-result');
+    if (!goal || !dateVal) { result.style.display = 'none'; return; }
+    const months = Math.max(1, Math.round((new Date(dateVal) - new Date()) / (1000 * 60 * 60 * 24 * 30.44)));
+    const sym    = currencySymbols[userData.currency] || '€';
+    const monthly = goal / months;
+    document.getElementById('sav-monthly').textContent = sym + monthly.toFixed(2);
+    document.getElementById('sav-weekly').textContent  = sym + (monthly / 4.33).toFixed(2);
+    document.getElementById('sav-daily').textContent   = sym + (monthly / 30.44).toFixed(2);
+    document.getElementById('sav-months-left').textContent = `${months} month${months !== 1 ? 's' : ''} to reach your goal`;
+    result.style.display = 'block';
+  }
+
+  function calcEmergency() {
+    const savings  = parseFloat(document.getElementById('emerg-savings').value) || 0;
+    const finance  = getStorageData('finance');
+    const result   = document.getElementById('emerg-result');
+    const months   = [...new Set(finance.filter(f => f.type === 'expense').map(f => (f.date || '').slice(0, 7)).filter(Boolean))];
+    const avgMonthlyExp = months.length ? finance.filter(f => f.type === 'expense').reduce((s, f) => s + f.amount, 0) / months.length : 0;
+    if (avgMonthlyExp === 0) { result.style.display = 'none'; return; }
+    const covered  = savings / avgMonthlyExp;
+    const pct      = Math.min(100, Math.round((covered / 6) * 100));
+    const color    = covered >= 6 ? 'var(--green)' : covered >= 3 ? 'var(--amber)' : 'var(--red)';
+    document.getElementById('emerg-icon').style.color = color;
+    document.getElementById('emerg-months').textContent = `${covered.toFixed(1)} months covered`;
+    document.getElementById('emerg-msg').textContent    = covered >= 6 ? 'Great — you have a full emergency fund!' : covered >= 3 ? 'Getting there — aim for 6 months' : 'Low — try to build up to 3–6 months';
+    document.getElementById('emerg-bar').style.width      = pct + '%';
+    document.getElementById('emerg-bar').style.background = color;
+    result.style.display = 'block';
+    result.style.background = covered >= 3 ? 'var(--teal-soft)' : 'var(--amber-soft)';
   }
 
   function refreshGym() {
