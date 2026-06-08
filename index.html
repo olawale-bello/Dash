@@ -13,6 +13,8 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5.0.4/dist/tesseract.min.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 <script>
   const DASH_CONFIG = {
     user: {
@@ -932,6 +934,7 @@
 <script>
   // ========== CONFIG & STATE ==========
   let userData = { name: '', studio: '', target: 2000, email: '', logo: '', currency: 'EUR' };
+  let db = null;
   const currencySymbols = { EUR: '€', USD: '$', GBP: '£', NGN: '₦' };
   let currentEditingId = null;
   let currentEditingModule = null;
@@ -1068,6 +1071,25 @@
     },
   };
 
+  // Maps localStorage keys → Firestore document names in the 'dashData' collection
+  const FIRESTORE_MAP = {
+    dashTasks:         'tasks',
+    dashInvoices:      'invoices',
+    dashGoals:         'goals',
+    dashSchedule:      'schedule',
+    dashFinance:       'finance',
+    dashGym:           'gym',
+    dashNotes:         'notes',
+    dashTime:          'time',
+    dashClients:       'clients',
+    dashNutrition:     'nutrition',
+    dashFaith:         'faith',
+    dashHealth:        'health',
+    dashRelationships: 'relationships',
+    dashLearning:      'learning',
+    dashProgress:      'progress',
+  };
+
   // ========== UTILITY FUNCTIONS ==========
   function formatCurrency(amount) {
     const symbol = currencySymbols[userData.currency] || '€';
@@ -1082,6 +1104,11 @@
   function saveStorageData(module, data) {
     const key = MODULE_CONFIG[module]?.storage || `dash${module}`;
     localStorage.setItem(key, JSON.stringify(data));
+    if (db) {
+      const fsDoc = FIRESTORE_MAP[key] || module;
+      db.collection('dashData').doc(fsDoc).set({ data })
+        .catch(e => console.warn('Firestore write failed:', e));
+    }
   }
 
   function getFormData(module) {
@@ -1891,6 +1918,22 @@
     refresh();
   }
 
+  // ========== FIRESTORE SYNC ==========
+  async function syncFromFirestore() {
+    if (!db) return;
+    try {
+      const pulls = Object.entries(FIRESTORE_MAP).map(async ([lsKey, fsDoc]) => {
+        const snap = await db.collection('dashData').doc(fsDoc).get();
+        if (snap.exists && Array.isArray(snap.data().data)) {
+          localStorage.setItem(lsKey, JSON.stringify(snap.data().data));
+        }
+      });
+      await Promise.all(pulls);
+    } catch (e) {
+      console.warn('Firestore sync failed:', e);
+    }
+  }
+
   // ========== APP INITIALIZATION ==========
   function initApp() {
     const saved = localStorage.getItem('dashWale_User');
@@ -1899,11 +1942,9 @@
     } else {
       userData = { name: 'Wale', studio: 'Wale OS', target: 2000, email: '', logo: '', currency: 'EUR' };
       localStorage.setItem('dashWale_User', JSON.stringify(userData));
-      loadFirebaseData();
     }
 
     // Always sync from DASH_CONFIG so changes here take effect immediately
-    // even on devices that already have old localStorage data saved
     if (typeof DASH_CONFIG !== 'undefined') {
       const cfg = DASH_CONFIG.user;
       if (cfg.name)          userData.name     = cfg.name;
@@ -1912,49 +1953,23 @@
       localStorage.setItem('dashWale_User', JSON.stringify(userData));
     }
 
+    // Initialize Firestore
+    if (typeof DASH_CONFIG !== 'undefined' && DASH_CONFIG.firebase && typeof firebase !== 'undefined') {
+      try {
+        if (!firebase.apps.length) firebase.initializeApp(DASH_CONFIG.firebase);
+        db = firebase.firestore();
+      } catch (e) {
+        console.warn('Firebase init failed:', e);
+      }
+    }
+
     renderApp();
-  }
 
-  function loadFirebaseData() {
-    // Load Firebase Finance data
-    const firebaseFinance = [
-      { id: 1780816958886, amount: 10, cat: "Food", date: "2026-06-07", desc: "Grocery", type: "expense" },
-      { id: 1780757710819, amount: 19, cat: "Food", date: "2026-06-06", desc: "Groceries", type: "expense" },
-      { id: 1780652320077, amount: 15, cat: "Software", date: "2026-06-05", desc: "Magnetic Subscription", type: "expense" },
-      { id: 1780649118709, amount: 13, cat: "Food", date: "2026-06-05", desc: "Groceries", type: "expense" },
-      { id: 1780561553409, amount: 19, cat: "Food", date: "2026-06-04", desc: "Chopstick", type: "expense" },
-      { id: 1780517673364, amount: 20, cat: "Food", date: "2026-06-02", desc: "Hesburger", type: "expense" },
-      { id: 1780517643171, amount: 156, cat: "Other income", date: "2026-06-02", desc: "Naira exchange", type: "income" },
-      { id: 1780430306117, amount: 2.2, cat: "Food", date: "2026-06-02", desc: "Water at the Gym", type: "expense" },
-      { id: 1780416994175, amount: 20, cat: "Gym", date: "2026-06-02", desc: "Gym membership", type: "expense" },
-      { id: 1780397462451, amount: 16, cat: "Transport", date: "2026-06-02", desc: "Bolt", type: "expense" },
-      { id: 1780397335023, amount: 8, cat: "Food", date: "2026-06-02", desc: "Fruit", type: "expense" },
-      { id: 1780304659704, amount: 8, cat: "Software", date: "2026-06-01", desc: "MetLife Subscription", type: "expense" },
-      { id: 1780300107821, amount: 39, cat: "Other expense", date: "2026-06-01", desc: "Gift", type: "expense" }
-    ];
-
-    // Load Firebase Gym data
-    const firebaseGym = [
-      { id: 1780768442352, type: "Lower", duration: 60, date: "2026-06-06", notes: "Leg day" },
-      { id: 1780683420207, type: "Upper", duration: 60, date: "2026-06-05", notes: "Biceps and shoulders workout" },
-      { id: 1780420203755, type: "Pull", duration: 90, date: "2026-06-02", notes: "Energetic" },
-      { id: 1780339924909, type: "Push", duration: 80, date: "2026-06-01", notes: "" }
-    ];
-
-    // Load Firebase Tasks data
-    const firebaseTasks = [
-      { id: 1780683385290, desc: "[Schedule] 4:00 – 5:30pm — Weekly review", date: "05/06/2026", done: true, cat: "admin", pri: "med" },
-      { id: 1780683382835, desc: "[Schedule] 2:00 – 4:00pm — Deliver client work", date: "05/06/2026", done: true, cat: "client", pri: "med" },
-      { id: 1780572683469, desc: "[Schedule] 11:00am – 1pm — Outreach + follow up", date: "6/4/2026", done: true, cat: "outreach", pri: "med" },
-      { id: 1780510136825, desc: "[Schedule] 2:00 – 5:30pm — Deep work", date: "03/06/2026", done: true, cat: "client", pri: "med" },
-      { id: 1780510131826, desc: "[Schedule] 9:00 – 11:00am — MyndZone Website", date: "03/06/2026", done: true, cat: "admin", pri: "med" }
-    ];
-
-    localStorage.setItem('dashWale_Finance', JSON.stringify(firebaseFinance));
-    localStorage.setItem('dashWale_Gym', JSON.stringify(firebaseGym));
-    localStorage.setItem('dashWale_Tasks', JSON.stringify(firebaseTasks));
-    localStorage.setItem('dashWale_enabledInsights', JSON.stringify({ time: true, clients: true, finance: true, gym: true, nutrition: false, faith: false, health: false, relationships: false, learning: false }));
-    setTimeout(() => refresh(), 100);
+    // Pull latest data from Firestore, then refresh UI
+    syncFromFirestore().then(() => {
+      refresh();
+      renderApp();
+    });
   }
 
   function getTimeBasedGreeting() {
