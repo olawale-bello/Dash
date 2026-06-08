@@ -693,6 +693,50 @@
         </div>
         <div id="gym-list"></div>
       </div>
+
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+          <div class="card-title" style="margin:0;"><i class="ti ti-trophy" style="color:var(--amber);margin-right:6px;font-size:18px;"></i>Personal Records</div>
+          <button class="btn" onclick="openPRForm()"><i class="ti ti-plus" style="margin-right:5px;"></i>Log PR</button>
+        </div>
+        <div id="pr-form" style="background:var(--surface-2);padding:14px;border-radius:var(--radius-sm);margin-bottom:16px;display:none;">
+          <div class="form-row">
+            <div class="form-group">
+              <label>Exercise</label>
+              <input id="pr-exercise" type="text" placeholder="e.g. Bench Press" list="pr-exercise-list">
+              <datalist id="pr-exercise-list">
+                <option>Bench Press</option><option>Squat</option><option>Deadlift</option>
+                <option>Overhead Press</option><option>Barbell Row</option><option>Pull-ups</option>
+                <option>Dumbbell Curl</option><option>Leg Press</option><option>Romanian Deadlift</option>
+                <option>Hip Thrust</option><option>Incline Press</option><option>Lat Pulldown</option>
+              </datalist>
+            </div>
+            <div class="form-group">
+              <label>Date</label>
+              <input id="pr-date" type="date">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Value</label>
+              <input id="pr-value" type="number" placeholder="100">
+            </div>
+            <div class="form-group">
+              <label>Unit</label>
+              <select id="pr-unit"><option>kg</option><option>lbs</option><option>reps</option><option>mins</option><option>secs</option></select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Notes</label>
+            <input id="pr-notes" type="text" placeholder="Optional notes">
+          </div>
+          <div style="display:flex;gap:8px;">
+            <button class="btn" onclick="saveGymPR()">Save PR</button>
+            <button class="btn-outline" onclick="closePRForm()">Cancel</button>
+          </div>
+        </div>
+        <div id="pr-list"></div>
+      </div>
     </div>
 
     <!-- Time Tracking Section -->
@@ -1129,6 +1173,7 @@
     dashRelationships: 'relationships',
     dashLearning:      'learning',
     dashProgress:      'progress',
+    dashGymPRs:        'gymPRs',
   };
 
   // ========== UTILITY FUNCTIONS ==========
@@ -1629,6 +1674,79 @@
     const gym = getStorageData('gym');
     renderList('gym', gym, renderGymItem);
     updateGymStats(gym);
+    refreshGymPRs();
+  }
+
+  // ── PR functions ──────────────────────────────────────────────────────────
+  function openPRForm() {
+    const f = document.getElementById('pr-form');
+    f.style.display = f.style.display === 'none' ? 'block' : 'none';
+    document.getElementById('pr-date').value = defaultDate;
+  }
+  function closePRForm() {
+    document.getElementById('pr-form').style.display = 'none';
+    ['pr-exercise','pr-value','pr-notes'].forEach(id => document.getElementById(id).value = '');
+    document.getElementById('pr-unit').value = 'kg';
+  }
+
+  function saveGymPR() {
+    const exercise = document.getElementById('pr-exercise').value.trim();
+    const value    = parseFloat(document.getElementById('pr-value').value);
+    const unit     = document.getElementById('pr-unit').value;
+    const date     = document.getElementById('pr-date').value || defaultDate;
+    const notes    = document.getElementById('pr-notes').value.trim();
+    if (!exercise || isNaN(value)) { alert('Exercise and value are required.'); return; }
+    const prs = JSON.parse(localStorage.getItem('dashGymPRs') || '[]');
+    prs.push({ id: Date.now(), exercise, value, unit, date, notes });
+    localStorage.setItem('dashGymPRs', JSON.stringify(prs));
+    if (db) db.collection('dashData').doc('gymPRs').set({ data: prs }).catch(() => {});
+    closePRForm();
+    refreshGymPRs();
+  }
+
+  function deleteGymPR(id) {
+    let prs = JSON.parse(localStorage.getItem('dashGymPRs') || '[]');
+    prs = prs.filter(p => p.id !== id);
+    localStorage.setItem('dashGymPRs', JSON.stringify(prs));
+    if (db) db.collection('dashData').doc('gymPRs').set({ data: prs }).catch(() => {});
+    refreshGymPRs();
+  }
+
+  function refreshGymPRs() {
+    const prs = JSON.parse(localStorage.getItem('dashGymPRs') || '[]');
+    const container = document.getElementById('pr-list');
+    if (!prs.length) {
+      container.innerHTML = '<p style="color:var(--ink-3);font-size:13px;">No PRs logged yet</p>';
+      return;
+    }
+    // Group by exercise
+    const byEx = {};
+    prs.forEach(p => {
+      if (!byEx[p.exercise]) byEx[p.exercise] = [];
+      byEx[p.exercise].push(p);
+    });
+    container.innerHTML = Object.entries(byEx).map(([exercise, entries]) => {
+      const best = entries.reduce((b, e) => e.value > b.value ? e : b, entries[0]);
+      const sorted = [...entries].sort((a, b) => new Date(b.date) - new Date(a.date));
+      return `
+        <div style="margin-bottom:14px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+            <span style="font-weight:700;font-size:14px;">${exercise}</span>
+            <span style="background:var(--amber-soft);color:var(--amber);font-size:12px;font-weight:700;padding:3px 10px;border-radius:999px;">
+              <i class="ti ti-trophy" style="font-size:11px;margin-right:3px;"></i>Best: ${best.value} ${best.unit}
+            </span>
+          </div>
+          ${sorted.map(e => `
+            <div class="item" style="padding:8px 10px;">
+              <div class="item-left">
+                <div style="font-size:15px;font-weight:600;color:${e.id === best.id ? 'var(--amber)' : 'var(--ink)'};">${e.value} ${e.unit}</div>
+                <div class="item-meta">${e.date}${e.notes ? ' · ' + e.notes : ''}</div>
+              </div>
+              ${e.id === best.id ? '<i class="ti ti-star-filled" style="color:var(--amber);font-size:14px;"></i>' : ''}
+              <button class="btn-small" onclick="deleteGymPR(${e.id})"><i class="ti ti-trash"></i></button>
+            </div>`).join('')}
+        </div>`;
+    }).join('<div style="height:1px;background:var(--line);margin-bottom:14px;"></div>');
   }
 
   function updateGymStats(sessions) {
