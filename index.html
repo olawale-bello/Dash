@@ -1897,19 +1897,21 @@
     if (saved) {
       userData = JSON.parse(saved);
     } else {
-      // Use config.js values if available, otherwise fall back to defaults
-      const cfg = (typeof DASH_CONFIG !== 'undefined') ? DASH_CONFIG.user : {};
-      userData = {
-        name:     cfg.name           || 'Wale',
-        studio:   cfg.studio         || 'Wale OS',
-        target:   cfg.monthlyTarget  || 5000,
-        email:    cfg.email          || '',
-        logo:     '',
-        currency: cfg.currency       || 'EUR'
-      };
+      userData = { name: 'Wale', studio: 'Wale OS', target: 2000, email: '', logo: '', currency: 'EUR' };
       localStorage.setItem('dashWale_User', JSON.stringify(userData));
       loadFirebaseData();
     }
+
+    // Always sync from DASH_CONFIG so changes here take effect immediately
+    // even on devices that already have old localStorage data saved
+    if (typeof DASH_CONFIG !== 'undefined') {
+      const cfg = DASH_CONFIG.user;
+      if (cfg.name)          userData.name     = cfg.name;
+      if (cfg.currency)      userData.currency = cfg.currency;
+      if (cfg.monthlyTarget) userData.target   = cfg.monthlyTarget;
+      localStorage.setItem('dashWale_User', JSON.stringify(userData));
+    }
+
     renderApp();
   }
 
