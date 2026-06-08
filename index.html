@@ -131,6 +131,16 @@
   .modal .form-group{margin-bottom:16px;}
   .modal .btn{width:100%;padding:11px;}
   .invoice-preview{background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:40px;font-family:'Arial',sans-serif;max-width:600px;margin:0 auto;}
+  .gym-stat{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:20px 12px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:4px;}
+  .gym-stat.feature{background:var(--accent);border-color:var(--accent);}
+  .gym-stat-icon{font-size:22px;color:var(--accent);line-height:1;}
+  .gym-stat.feature .gym-stat-icon{color:#b5d4f4;}
+  .gym-stat-num{font-size:32px;font-weight:700;line-height:1.1;color:var(--ink);}
+  .gym-stat.feature .gym-stat-num{color:#fff;}
+  .gym-stat-label{font-size:12px;font-weight:600;color:var(--ink-2);}
+  .gym-stat.feature .gym-stat-label{color:#b5d4f4;}
+  .gym-stat-sub{font-size:11px;color:var(--ink-3);}
+  .gym-stat.feature .gym-stat-sub{color:#85b7eb;}
   .finance-actions{flex-wrap:wrap;}
   .greet-info{min-width:0;}
   .stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:16px;}
@@ -567,25 +577,29 @@
     <!-- Gym Section -->
     <div id="gym" class="section">
       <div class="stats-grid">
-        <div class="stat feature" style="text-align:center;">
-          <div class="stat-label" style="justify-content:center;"><i class="ti ti-flame"></i> Streak</div>
-          <div class="stat-value" id="gym-streak">0</div>
-          <div class="stat-label" style="margin-top:4px;color:#85b7eb;">days in a row</div>
+        <div class="gym-stat feature">
+          <i class="ti ti-flame gym-stat-icon"></i>
+          <div class="gym-stat-num" id="gym-streak">0</div>
+          <div class="gym-stat-label">Current streak</div>
+          <div class="gym-stat-sub">days in a row</div>
         </div>
-        <div class="stat" style="text-align:center;">
-          <div class="stat-label" style="justify-content:center;"><i class="ti ti-calendar-week"></i> This week</div>
-          <div class="stat-value" id="gym-this-week">0</div>
-          <div class="stat-label" style="margin-top:4px;">sessions</div>
+        <div class="gym-stat">
+          <i class="ti ti-calendar-week gym-stat-icon"></i>
+          <div class="gym-stat-num" id="gym-this-week">0</div>
+          <div class="gym-stat-label">This week</div>
+          <div class="gym-stat-sub">sessions</div>
         </div>
-        <div class="stat" style="text-align:center;">
-          <div class="stat-label" style="justify-content:center;"><i class="ti ti-barbell"></i> Total</div>
-          <div class="stat-value" id="gym-total">0</div>
-          <div class="stat-label" style="margin-top:4px;">all time</div>
+        <div class="gym-stat">
+          <i class="ti ti-barbell gym-stat-icon"></i>
+          <div class="gym-stat-num" id="gym-total">0</div>
+          <div class="gym-stat-label">Total sessions</div>
+          <div class="gym-stat-sub">all time</div>
         </div>
-        <div class="stat" style="text-align:center;">
-          <div class="stat-label" style="justify-content:center;"><i class="ti ti-trophy"></i> Best streak</div>
-          <div class="stat-value" id="gym-best-streak">0</div>
-          <div class="stat-label" style="margin-top:4px;">days</div>
+        <div class="gym-stat">
+          <i class="ti ti-trophy gym-stat-icon"></i>
+          <div class="gym-stat-num" id="gym-best-streak">0</div>
+          <div class="gym-stat-label">Best streak</div>
+          <div class="gym-stat-sub">days</div>
         </div>
       </div>
       <div class="card">
