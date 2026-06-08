@@ -106,6 +106,19 @@
   <div style="margin-top:16px;"><a class="link" href="index.html">→ Open Dash dashboard</a></div>
 </div>
 
+<script src="config.js"></script>
+<script>
+  // Auto-fill Firebase fields from config.js if available
+  window.addEventListener('DOMContentLoaded', () => {
+    if (typeof DASH_CONFIG !== 'undefined' && DASH_CONFIG.firebase) {
+      const f = DASH_CONFIG.firebase;
+      document.getElementById('cfg-apiKey').value     = f.apiKey     || '';
+      document.getElementById('cfg-projectId').value  = f.projectId  || '';
+      document.getElementById('cfg-authDomain').value = f.authDomain || '';
+      document.getElementById('cfg-appId').value      = f.appId      || '';
+    }
+  });
+</script>
 <script type="module">
   import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
   import { getFirestore, doc, getDoc } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';

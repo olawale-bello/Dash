@@ -13,6 +13,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5.0.4/dist/tesseract.min.js"></script>
+<script src="config.js"></script>
 <style>
   :root{
     --bg:#f4f5f7;
@@ -1880,13 +1881,15 @@
     if (saved) {
       userData = JSON.parse(saved);
     } else {
+      // Use config.js values if available, otherwise fall back to defaults
+      const cfg = (typeof DASH_CONFIG !== 'undefined') ? DASH_CONFIG.user : {};
       userData = {
-        name: 'Wale',
-        studio: 'Wale OS',
-        target: 5000,
-        email: 'wale@example.com',
-        logo: '',
-        currency: 'EUR'
+        name:     cfg.name           || 'Wale',
+        studio:   cfg.studio         || 'Wale OS',
+        target:   cfg.monthlyTarget  || 5000,
+        email:    cfg.email          || '',
+        logo:     '',
+        currency: cfg.currency       || 'EUR'
       };
       localStorage.setItem('dashWale_User', JSON.stringify(userData));
       loadFirebaseData();
