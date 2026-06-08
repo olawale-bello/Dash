@@ -566,6 +566,28 @@
 
     <!-- Gym Section -->
     <div id="gym" class="section">
+      <div class="stats-grid">
+        <div class="stat feature" style="text-align:center;">
+          <div class="stat-label" style="justify-content:center;"><i class="ti ti-flame"></i> Streak</div>
+          <div class="stat-value" id="gym-streak">0</div>
+          <div class="stat-label" style="margin-top:4px;color:#85b7eb;">days in a row</div>
+        </div>
+        <div class="stat" style="text-align:center;">
+          <div class="stat-label" style="justify-content:center;"><i class="ti ti-calendar-week"></i> This week</div>
+          <div class="stat-value" id="gym-this-week">0</div>
+          <div class="stat-label" style="margin-top:4px;">sessions</div>
+        </div>
+        <div class="stat" style="text-align:center;">
+          <div class="stat-label" style="justify-content:center;"><i class="ti ti-barbell"></i> Total</div>
+          <div class="stat-value" id="gym-total">0</div>
+          <div class="stat-label" style="margin-top:4px;">all time</div>
+        </div>
+        <div class="stat" style="text-align:center;">
+          <div class="stat-label" style="justify-content:center;"><i class="ti ti-trophy"></i> Best streak</div>
+          <div class="stat-value" id="gym-best-streak">0</div>
+          <div class="stat-label" style="margin-top:4px;">days</div>
+        </div>
+      </div>
       <div class="card">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
           <div class="card-title" style="margin:0;">Workouts</div>
@@ -1427,6 +1449,66 @@
   function refreshGym() {
     const gym = getStorageData('gym');
     renderList('gym', gym, renderGymItem);
+    updateGymStats(gym);
+  }
+
+  function updateGymStats(sessions) {
+    const total = sessions.length;
+
+    // Get unique dates (multiple sessions same day count as 1)
+    const dates = [...new Set(sessions.map(s => s.date))].sort();
+
+    // Current streak: count consecutive days ending today or yesterday
+    let streak = 0;
+    if (dates.length > 0) {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      let check = new Date(today);
+
+      // Allow today or yesterday as the start of an active streak
+      const lastDate = new Date(dates[dates.length - 1]);
+      lastDate.setHours(0, 0, 0, 0);
+      const diffFromToday = Math.round((today - lastDate) / 86400000);
+      if (diffFromToday > 1) {
+        streak = 0; // streak is broken
+      } else {
+        check = new Date(lastDate);
+        streak = 1;
+        for (let i = dates.length - 2; i >= 0; i--) {
+          const prev = new Date(dates[i]);
+          prev.setHours(0, 0, 0, 0);
+          const diff = Math.round((check - prev) / 86400000);
+          if (diff === 1) { streak++; check = prev; }
+          else break;
+        }
+      }
+    }
+
+    // Best streak ever
+    let best = 0, run = 0;
+    for (let i = 0; i < dates.length; i++) {
+      if (i === 0) { run = 1; }
+      else {
+        const a = new Date(dates[i - 1]);
+        const b = new Date(dates[i]);
+        const diff = Math.round((b - a) / 86400000);
+        run = diff === 1 ? run + 1 : 1;
+      }
+      if (run > best) best = run;
+    }
+
+    // This week (Mon–Sun)
+    const now = new Date();
+    const dow = now.getDay() === 0 ? 6 : now.getDay() - 1; // Mon=0
+    const weekStart = new Date(now);
+    weekStart.setDate(now.getDate() - dow);
+    weekStart.setHours(0, 0, 0, 0);
+    const thisWeek = dates.filter(d => new Date(d) >= weekStart).length;
+
+    document.getElementById('gym-streak').textContent = streak;
+    document.getElementById('gym-best-streak').textContent = best;
+    document.getElementById('gym-total').textContent = total;
+    document.getElementById('gym-this-week').textContent = thisWeek;
   }
 
   function refreshNotes() {
