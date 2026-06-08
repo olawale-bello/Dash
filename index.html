@@ -131,6 +131,24 @@
   .modal .form-group{margin-bottom:16px;}
   .modal .btn{width:100%;padding:11px;}
   .invoice-preview{background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:40px;font-family:'Arial',sans-serif;max-width:600px;margin:0 auto;}
+  .finance-actions{flex-wrap:wrap;}
+  .greet-info{min-width:0;}
+  .stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:16px;}
+  .mobile-nav{display:none;position:fixed;bottom:0;left:0;right:0;background:var(--surface);border-top:1px solid var(--line);z-index:900;justify-content:space-around;padding-bottom:env(safe-area-inset-bottom,0px);}
+  .mob-nav-btn{display:flex;flex-direction:column;align-items:center;gap:3px;padding:10px 4px 8px;background:none;border:none;color:var(--ink-3);font-size:10px;font-family:inherit;font-weight:500;cursor:pointer;flex:1;min-width:0;}
+  .mob-nav-btn i{font-size:22px;line-height:1;}
+  .mob-nav-btn.active{color:var(--accent);}
+  .mob-nav-btn span{white-space:nowrap;}
+  .mob-drawer{position:fixed;bottom:-100%;left:0;right:0;background:var(--surface);border-radius:20px 20px 0 0;z-index:950;transition:bottom 0.3s ease;padding:20px 16px 100px;max-height:80vh;overflow-y:auto;box-shadow:0 -8px 32px rgba(0,0,0,0.15);}
+  .mob-drawer.open{bottom:0;}
+  .mob-drawer-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;}
+  .mob-drawer-header span{font-weight:600;font-size:16px;}
+  .mob-drawer-close{background:var(--surface-2);border:1px solid var(--line);border-radius:999px;width:32px;height:32px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--ink-2);font-size:16px;}
+  .mob-drawer-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;}
+  .mob-drawer-item{display:flex;flex-direction:column;align-items:center;gap:6px;padding:14px 8px;background:var(--surface-2);border:1px solid var(--line);border-radius:var(--radius-sm);color:var(--ink-2);font-size:11px;font-family:inherit;font-weight:500;cursor:pointer;text-align:center;}
+  .mob-drawer-item i{font-size:22px;color:var(--accent);}
+  .mob-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:940;}
+  .mob-overlay.open{display:block;}
   @media(max-width:1100px){
     .sidebar{width:60px;padding:16px 8px;}
     .sidebar .brand{flex-direction:column;gap:8px;padding-bottom:12px;}
@@ -145,24 +163,19 @@
     [style*="grid-template-columns:repeat(3,1fr)"] { grid-template-columns: repeat(2, 1fr) !important; }
   }
   @media(max-width:768px){
-    .hamburger{display:block;}
-    .app{flex-direction:column;}
-    .sidebar{position:fixed;left:0;top:0;width:100%;height:100%;z-index:999;transform:translateX(-100%);transition:transform 0.3s;padding:60px 16px 16px;}
-    .sidebar.open{transform:translateX(0);}
-    .sidebar-overlay{display:none;}
-    .sidebar-overlay.open{display:block;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);z-index:998;}
-    .brand-name{display:none;}
-    .nav-label{display:block;}
-    .nav-item span{display:inline;}
-    .upgrade{display:none;}
-    .main{padding:12px;}
+    .hamburger{display:none!important;}
+    .sidebar{display:none!important;}
+    .sidebar-overlay{display:none!important;}
+    .mobile-nav{display:flex;}
+    .main{padding:12px 12px 84px;}
     .modal{width:95%;padding:16px;}
-    .topbar{padding:8px 0 12px 0;margin-bottom:0;display:flex;justify-content:space-between;align-items:center;flex-wrap:nowrap;gap:8px;}
-    .topbar > div:first-child{display:flex;align-items:center;gap:8px;flex:1;}
+    .invoice-preview{padding:20px;}
+    .topbar{padding:8px 0 14px 0;margin-bottom:0;display:flex;justify-content:space-between;align-items:center;gap:8px;}
     .greet{font-size:20px;}
     .greet-date{font-size:12px;}
     .card{padding:12px;margin-bottom:12px;}
     .card-title{font-size:14px;}
+    .card > div[style*="justify-content:space-between"]{flex-wrap:wrap;gap:8px;}
     .stat{padding:12px;margin-bottom:10px;}
     .stat-value{font-size:22px;}
     .stat-label{font-size:12px;}
@@ -175,16 +188,15 @@
     .btn-small{padding:4px;}
     .avatar{width:38px;height:38px;}
     .form-row{grid-template-columns:1fr;}
-    [style*="grid-template-columns:repeat(4,1fr)"] { grid-template-columns: 1fr !important; }
-    [style*="grid-template-columns:repeat(3,1fr)"] { grid-template-columns: 1fr !important; }
-    [style*="grid-template-columns:repeat(2,1fr)"] { grid-template-columns: 1fr !important; }
-    [style*="display:grid"] { grid-template-columns: 1fr !important; }
+    .stats-grid{grid-template-columns:repeat(2,1fr);}
+    [style*="grid-template-columns:repeat(4,1fr)"]{grid-template-columns:repeat(2,1fr)!important;}
+    [style*="grid-template-columns:repeat(3,1fr)"]{grid-template-columns:repeat(2,1fr)!important;}
+    [style*="grid-template-columns:repeat(2,1fr)"]{grid-template-columns:1fr!important;}
+    [style*="display:grid"]{grid-template-columns:1fr!important;}
   }
   @media(max-width:600px){
-    .hamburger{display:block;font-size:26px;}
-    .main{padding:10px;}
-    .topbar{padding:8px 0;margin-bottom:8px;gap:6px;flex-wrap:nowrap;}
-    .topbar > div:first-child{display:flex;align-items:center;gap:8px;flex:1;}
+    .main{padding:10px 10px 84px;}
+    .topbar{padding:8px 0;margin-bottom:8px;gap:6px;}
     .topbar-right{flex-shrink:0;}
     .greet-date{font-size:11px;}
     .greet{font-size:18px;}
@@ -205,12 +217,14 @@
     .modal{width:95%;max-width:100%;padding:14px;}
     .modal-title{font-size:18px;}
     .modal-subtitle{font-size:12px;}
+    #timer-display{font-size:36px;}
+    .invoice-preview{padding:14px;}
   }
   @media(max-width:480px){
-    .hamburger{display:block;font-size:24px;padding:6px 10px;}
-    .main{padding:8px;}
-    .topbar{padding:6px 0;margin-bottom:10px;gap:4px;flex-wrap:nowrap;}
-    .topbar > div:first-child{display:flex;align-items:center;gap:6px;}
+    .main{padding:8px 8px 84px;}
+    .topbar{padding:6px 0;margin-bottom:10px;gap:4px;}
+    .stats-grid{grid-template-columns:1fr;}
+    .mob-drawer-grid{grid-template-columns:repeat(3,1fr);}
     .greet-date{font-size:10px;}
     .greet{font-size:16px;}
     .card{padding:8px;margin-bottom:8px;}
@@ -230,6 +244,7 @@
     .form-group{margin-bottom:10px;}
     input,textarea,select{font-size:16px;}
     .upgrade{display:none;}
+    #timer-display{font-size:28px;}
   }
   @media(max-width:360px){
     .main{padding:6px;}
@@ -277,8 +292,10 @@
     <div class="topbar">
       <div>
         <button class="hamburger" id="hamburger" onclick="toggleMenu()">☰</button>
-        <div class="greet-date" id="greet-date"></div>
-        <div class="greet"><span id="greeting-text">Good morning</span>, <span id="user-name">there</span></div>
+        <div class="greet-info">
+          <div class="greet-date" id="greet-date"></div>
+          <div class="greet"><span id="greeting-text">Good morning</span>, <span id="user-name">there</span></div>
+        </div>
       </div>
       <div class="topbar-right">
         <div class="avatar" id="avatar" onclick="openSettings()" style="cursor:pointer;"></div>
@@ -286,7 +303,7 @@
     </div>
 
     <div id="dashboard" class="section active">
-      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:16px;">
+      <div class="stats-grid">
         <div class="stat feature">
           <div class="stat-label"><i class="ti ti-wallet"></i>Earned this month</div>
           <div class="stat-value" id="dash-earned">€0</div>
@@ -513,7 +530,7 @@
             <div class="stat-value" style="color:var(--red);" id="finance-expense">€0</div>
           </div>
         </div>
-        <div style="display:flex;gap:8px;margin-bottom:12px;">
+        <div class="finance-actions" style="display:flex;gap:8px;margin-bottom:12px;">
           <button class="btn" onclick="openForm('finance')"><i class="ti ti-plus" style="margin-right:5px;"></i>Add transaction</button>
           <button class="btn" onclick="document.getElementById('receipt-upload').click()" style="background:var(--green);"><i class="ti ti-camera" style="margin-right:5px;"></i>Scan receipt</button>
           <input type="file" id="receipt-upload" accept="image/*" style="display:none;" onchange="scanReceipt(this)">
@@ -820,6 +837,44 @@
     </div>
   </main>
 </div>
+
+<!-- Mobile bottom navigation -->
+<nav class="mobile-nav" id="mobile-nav">
+  <button class="mob-nav-btn active" id="mob-btn-dashboard" onclick="mobileNav('dashboard',this)">
+    <i class="ti ti-layout-grid"></i><span>Home</span>
+  </button>
+  <button class="mob-nav-btn" id="mob-btn-tasks" onclick="mobileNav('tasks',this)">
+    <i class="ti ti-checkbox"></i><span>Tasks</span>
+  </button>
+  <button class="mob-nav-btn" id="mob-btn-invoices" onclick="mobileNav('invoices',this)">
+    <i class="ti ti-file-invoice"></i><span>Invoices</span>
+  </button>
+  <button class="mob-nav-btn" id="mob-btn-finance" onclick="mobileNav('finance',this)">
+    <i class="ti ti-chart-bar"></i><span>Finance</span>
+  </button>
+  <button class="mob-nav-btn" id="mob-btn-more" onclick="openMobileDrawer()">
+    <i class="ti ti-menu-2"></i><span>More</span>
+  </button>
+</nav>
+
+<!-- Mobile drawer (More sections) -->
+<div class="mob-drawer" id="mob-drawer">
+  <div class="mob-drawer-header">
+    <span>More sections</span>
+    <button class="mob-drawer-close" onclick="closeMobileDrawer()"><i class="ti ti-x"></i></button>
+  </div>
+  <div class="mob-drawer-grid">
+    <button class="mob-drawer-item" onclick="mobileNav('goals',null);closeMobileDrawer()"><i class="ti ti-target-arrow"></i><span>Goals</span></button>
+    <button class="mob-drawer-item" onclick="mobileNav('schedule',null);closeMobileDrawer()"><i class="ti ti-calendar"></i><span>Schedule</span></button>
+    <button class="mob-drawer-item" onclick="mobileNav('time',null);closeMobileDrawer()"><i class="ti ti-clock"></i><span>Time</span></button>
+    <button class="mob-drawer-item" onclick="mobileNav('clients',null);closeMobileDrawer()"><i class="ti ti-users"></i><span>Clients</span></button>
+    <button class="mob-drawer-item" onclick="mobileNav('gym',null);closeMobileDrawer()"><i class="ti ti-barbell"></i><span>Gym</span></button>
+    <button class="mob-drawer-item" onclick="mobileNav('progress',null);closeMobileDrawer()"><i class="ti ti-chart-line"></i><span>Progress</span></button>
+    <button class="mob-drawer-item" onclick="mobileNav('notes',null);closeMobileDrawer()"><i class="ti ti-notebook"></i><span>Notes</span></button>
+    <button class="mob-drawer-item" onclick="mobileNav('insights-settings',null);closeMobileDrawer()"><i class="ti ti-adjustments"></i><span>Settings</span></button>
+  </div>
+</div>
+<div class="mob-overlay" id="mob-overlay" onclick="closeMobileDrawer()"></div>
 
 <script>
   // ========== CONFIG & STATE ==========
@@ -1801,6 +1856,22 @@
     const navItem = document.querySelector(`.nav-item[onclick="switchSection('${sec}')"]`);
     if (navItem) navItem.classList.add('active');
     closeMenu();
+  }
+
+  function mobileNav(sec, btn) {
+    switchSection(sec);
+    document.querySelectorAll('.mob-nav-btn').forEach(b => b.classList.remove('active'));
+    if (btn) btn.classList.add('active');
+  }
+
+  function openMobileDrawer() {
+    document.getElementById('mob-drawer').classList.add('open');
+    document.getElementById('mob-overlay').classList.add('open');
+  }
+
+  function closeMobileDrawer() {
+    document.getElementById('mob-drawer').classList.remove('open');
+    document.getElementById('mob-overlay').classList.remove('open');
   }
 
   function openSettings() {
