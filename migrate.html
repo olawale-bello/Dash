@@ -15,15 +15,12 @@
   .card-title{font-size:15px;font-weight:600;margin-bottom:16px;display:flex;align-items:center;gap:8px;}
   .step-badge{background:var(--accent);color:#fff;border-radius:999px;width:22px;height:22px;display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0;}
   label{display:block;font-size:12px;font-weight:600;margin-bottom:5px;color:var(--ink);}
-  input,textarea{font-family:inherit;font-size:13px;border:1px solid var(--line);border-radius:var(--radius-sm);padding:9px 12px;color:var(--ink);width:100%;margin-bottom:12px;}
-  input:focus,textarea:focus{outline:none;border-color:var(--accent);}
-  textarea{resize:vertical;min-height:100px;font-size:12px;font-family:monospace;}
+  input{font-family:inherit;font-size:13px;border:1px solid var(--line);border-radius:var(--radius-sm);padding:9px 12px;color:var(--ink);width:100%;margin-bottom:12px;}
+  input:focus{outline:none;border-color:var(--accent);}
   .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
   .btn{background:var(--accent);color:#fff;border:none;border-radius:var(--radius-sm);padding:10px 20px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;display:inline-flex;align-items:center;gap:6px;}
   .btn:hover{opacity:.9;}
   .btn-green{background:var(--green);}
-  .btn-sm{padding:7px 14px;font-size:12px;}
-  .btn-outline{background:var(--surface);border:1px solid var(--line);color:var(--ink);}
   .log{background:#1a1d23;color:#b4e4b4;border-radius:var(--radius-sm);padding:14px;font-family:monospace;font-size:12px;line-height:1.7;max-height:300px;overflow-y:auto;margin-top:12px;white-space:pre-wrap;}
   .log .err{color:#f88;}
   .log .warn{color:#ffd;}
@@ -32,28 +29,32 @@
   .preview-table th{background:var(--bg);padding:8px;text-align:left;border-bottom:1px solid var(--line);font-weight:600;}
   .preview-table td{padding:8px;border-bottom:1px solid var(--line);color:var(--ink-2);max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
   .count-badge{display:inline-block;background:var(--accent);color:#fff;border-radius:999px;padding:2px 8px;font-size:11px;font-weight:600;margin-left:8px;}
-  .section-toggle{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--line);}
-  .section-toggle:last-child{border-bottom:none;}
-  .toggle{width:40px;height:22px;background:var(--line);border-radius:999px;position:relative;cursor:pointer;border:none;transition:background .2s;flex-shrink:0;}
-  .toggle.on{background:var(--accent);}
-  .toggle::after{content:'';position:absolute;top:3px;left:3px;width:16px;height:16px;background:#fff;border-radius:999px;transition:left .2s;}
-  .toggle.on::after{left:21px;}
-  .section-label{flex:1;font-size:13px;font-weight:500;}
-  .section-count{font-size:12px;color:var(--ink-3);}
+  .module-row{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--line);}
+  .module-row:last-child{border-bottom:none;}
+  .module-icon{width:36px;height:36px;background:var(--bg);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;}
+  .module-info{flex:1;}
+  .module-name{font-weight:600;font-size:13px;}
+  .module-path{font-size:11px;color:var(--ink-3);font-family:monospace;}
+  .module-status{font-size:12px;font-weight:500;padding:3px 10px;border-radius:999px;}
+  .status-pending{background:var(--bg);color:var(--ink-3);}
+  .status-found{background:#e6f7ef;color:var(--green);}
+  .status-missing{background:var(--red-soft);color:var(--red);}
   .notice{background:var(--amber-soft);border:1px solid #d4a847;border-radius:var(--radius-sm);padding:12px;font-size:12px;color:var(--amber);margin-bottom:16px;}
-  .success-box{background:#e6f7ef;border:1px solid #1d9e75;border-radius:var(--radius-sm);padding:14px;font-size:13px;color:#1d9e75;display:none;}
-  .error-box{background:var(--red-soft);border:1px solid var(--red);border-radius:var(--radius-sm);padding:14px;font-size:13px;color:var(--red);display:none;}
+  .success-box{background:#e6f7ef;border:1px solid #1d9e75;border-radius:var(--radius-sm);padding:14px;font-size:13px;color:#1d9e75;display:none;margin-top:12px;}
+  .error-box{background:var(--red-soft);border:1px solid var(--red);border-radius:var(--radius-sm);padding:14px;font-size:13px;color:var(--red);display:none;margin-top:12px;}
+  .divider{height:1px;background:var(--line);margin:20px 0;}
+  a.link{color:var(--accent);font-weight:600;font-size:13px;text-decoration:none;}
+  a.link:hover{opacity:.8;}
 </style>
 </head>
 <body>
 
 <h1>Firestore → Dash Migration</h1>
-<p class="sub">Import your data from the old dashboard (waleos.netlify.app) into Dash. Your data stays in your browser — nothing is sent anywhere.</p>
+<p class="sub">Imports your wale-os data from Firestore into Dash. Runs entirely in your browser — nothing is sent anywhere.</p>
 
-<!-- Step 1: Firebase Config -->
+<!-- Step 1: Connect -->
 <div class="card">
-  <div class="card-title"><span class="step-badge">1</span> Firebase configuration</div>
-  <div class="notice">Open your old dashboard project in the Firebase Console → Project Settings → General → Your apps → SDK snippet → Config. Paste the values below.</div>
+  <div class="card-title"><span class="step-badge">1</span> Connect to Firebase</div>
   <div class="grid-2">
     <div>
       <label>API Key</label>
@@ -61,369 +62,346 @@
     </div>
     <div>
       <label>Project ID</label>
-      <input id="cfg-projectId" placeholder="my-project-id" />
+      <input id="cfg-projectId" placeholder="wale-0s" />
     </div>
   </div>
   <div class="grid-2">
     <div>
       <label>Auth Domain</label>
-      <input id="cfg-authDomain" placeholder="my-project.firebaseapp.com" />
+      <input id="cfg-authDomain" placeholder="wale-0s.firebaseapp.com" />
     </div>
     <div>
       <label>App ID</label>
-      <input id="cfg-appId" placeholder="1:123456:web:abc..." />
+      <input id="cfg-appId" placeholder="1:487..." />
     </div>
   </div>
-  <button class="btn" onclick="connectFirestore()">Connect to Firestore</button>
+  <button class="btn" onclick="connectFirestore()">Connect</button>
   <div id="connect-log" class="log" style="display:none;"></div>
 </div>
 
-<!-- Step 2: Fetch data -->
+<!-- Step 2: Fetch -->
 <div class="card" id="step2" style="display:none;">
-  <div class="card-title"><span class="step-badge">2</span> Fetch collections</div>
-  <p style="font-size:13px;color:var(--ink-2);margin-bottom:16px;">These are the collections we'll look for. Toggle off any you don't want to import.</p>
-  <div id="collections-list"></div>
-  <br>
-  <button class="btn" onclick="fetchAllData()">Fetch data from Firestore</button>
+  <div class="card-title"><span class="step-badge">2</span> Fetch your data</div>
+  <p style="font-size:13px;color:var(--ink-2);margin-bottom:16px;">Reading from <code style="background:var(--bg);padding:2px 6px;border-radius:4px;font-size:12px;">wale-os/{module}</code> — the exact structure found in your Firestore.</p>
+  <div id="module-list"></div>
+  <div class="divider"></div>
+  <button class="btn" onclick="fetchAll()">Fetch all data</button>
   <div id="fetch-log" class="log" style="display:none;"></div>
 </div>
 
-<!-- Step 3: Preview & map -->
+<!-- Step 3: Preview -->
 <div class="card" id="step3" style="display:none;">
-  <div class="card-title"><span class="step-badge">3</span> Preview fetched data</div>
+  <div class="card-title"><span class="step-badge">3</span> Preview</div>
   <div id="preview-container"></div>
 </div>
 
 <!-- Step 4: Import -->
 <div class="card" id="step4" style="display:none;">
   <div class="card-title"><span class="step-badge">4</span> Import into Dash</div>
-  <div class="notice">This will <strong>merge</strong> the imported data with any existing Dash data. Existing items will not be deleted.</div>
-  <button class="btn btn-green" onclick="importData()">Import into Dash localStorage</button>
-  <div id="success-box" class="success-box" style="margin-top:12px;"></div>
-  <div id="error-box" class="error-box" style="margin-top:12px;"></div>
+  <div class="notice">This <strong>merges</strong> the fetched data with any existing Dash data. Nothing will be deleted.</div>
+  <button class="btn btn-green" onclick="importAll()">Import into Dash</button>
+  <div id="success-box" class="success-box"></div>
+  <div id="error-box" class="error-box"></div>
   <div id="import-log" class="log" style="display:none;"></div>
-  <br>
-  <a href="index.html" style="font-size:13px;color:var(--accent);font-weight:600;">→ Open Dash dashboard</a>
+  <div style="margin-top:16px;"><a class="link" href="index.html">→ Open Dash dashboard</a></div>
 </div>
 
-<!-- Firebase SDKs -->
 <script type="module">
   import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
-  import { getFirestore, collection, getDocs, query, limit } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
-
-  window._fb = { initializeApp, getFirestore, collection, getDocs, query, limit };
+  import { getFirestore, doc, getDoc } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
+  window._fb = { initializeApp, getFirestore, doc, getDoc };
 </script>
 
 <script>
-  // ─── collection definitions ───────────────────────────────────────────────
-  // Left side = possible Firestore collection names (tries each in order)
-  // Right side = Dash localStorage key + field mapper
-  const COLLECTION_MAP = [
-    {
-      label: 'Tasks',
-      candidates: ['tasks', 'task'],
-      dashKey: 'dashTasks',
-      id: 'tasks',
-      map: (doc) => ({
-        id: Date.now() + Math.random(),
-        desc:  doc.desc || doc.description || doc.title || doc.task || '',
-        date:  toDate(doc.date || doc.dueDate || doc.deadline || doc.due),
-        start: toDate(doc.start || doc.startDate || doc.createdAt),
-        cat:   doc.cat || doc.category || 'General',
-        pri:   doc.pri || doc.priority || 'med',
-        done:  doc.done || doc.completed || false,
-      }),
-    },
-    {
-      label: 'Invoices',
-      candidates: ['invoices', 'invoice'],
-      dashKey: 'dashInvoices',
-      id: 'invoices',
-      map: (doc) => ({
-        id: Date.now() + Math.random(),
-        num:    doc.num || doc.invoiceNumber || doc.number || doc.id || '',
-        client: doc.client || doc.clientName || doc.name || '',
-        date:   toDate(doc.date || doc.issueDate || doc.createdAt),
-        due:    toDate(doc.due || doc.dueDate || doc.deadline),
-        amount: toNum(doc.amount || doc.total || doc.value || 0),
-        tax:    toNum(doc.tax || doc.taxRate || 0),
-        status: doc.status || 'unpaid',
-      }),
-    },
-    {
-      label: 'Finance / Transactions',
-      candidates: ['finance', 'transactions', 'transaction', 'income', 'expenses'],
-      dashKey: 'dashFinance',
-      id: 'finance',
-      map: (doc) => ({
-        id: Date.now() + Math.random(),
-        type:   doc.type || (doc.amount < 0 ? 'expense' : 'income'),
-        amount: Math.abs(toNum(doc.amount || doc.value || 0)),
-        desc:   doc.desc || doc.description || doc.note || doc.name || '',
-        cat:    doc.cat || doc.category || 'General',
-        date:   toDate(doc.date || doc.createdAt),
-      }),
-    },
-    {
-      label: 'Goals',
-      candidates: ['goals', 'goal'],
-      dashKey: 'dashGoals',
-      id: 'goals',
-      map: (doc) => ({
-        id:       Date.now() + Math.random(),
-        name:     doc.name || doc.title || doc.goal || '',
-        target:   toNum(doc.target || doc.targetAmount || 0),
-        current:  toNum(doc.current || doc.currentAmount || doc.saved || 0),
-        type:     doc.type || 'onetime',
-        deadline: toDate(doc.deadline || doc.dueDate || doc.date),
-      }),
-    },
-    {
-      label: 'Schedule / Time blocks',
-      candidates: ['schedule', 'timeblocks', 'blocks', 'calendar'],
-      dashKey: 'dashSchedule',
-      id: 'schedule',
-      map: (doc) => ({
-        id:       Date.now() + Math.random(),
-        title:    doc.title || doc.name || doc.activity || '',
-        day:      doc.day || 'Monday',
-        time:     doc.time || doc.startTime || '09:00',
-        duration: toNum(doc.duration || doc.hours || 1),
-      }),
-    },
-    {
-      label: 'Clients',
-      candidates: ['clients', 'client'],
-      dashKey: 'dashClients',
-      id: 'clients',
-      map: (doc) => ({
-        id:        Date.now() + Math.random(),
-        name:      doc.name || doc.clientName || '',
-        email:     doc.email || '',
-        rate:      toNum(doc.rate || doc.hourlyRate || 0),
-        terms:     doc.terms || doc.paymentTerms || 'NET 30',
-        notes:     doc.notes || '',
-        dateAdded: toDate(doc.dateAdded || doc.createdAt || doc.date),
-      }),
-    },
-    {
-      label: 'Gym / Workouts',
-      candidates: ['gym', 'workouts', 'workout', 'fitness'],
-      dashKey: 'dashGym',
-      id: 'gym',
-      map: (doc) => ({
-        id:       Date.now() + Math.random(),
-        date:     toDate(doc.date || doc.createdAt),
-        type:     doc.type || doc.workoutType || 'Full body',
-        duration: toNum(doc.duration || doc.minutes || 60),
-        notes:    doc.notes || '',
-      }),
-    },
-    {
-      label: 'Notes / Journal',
-      candidates: ['notes', 'journal', 'note'],
-      dashKey: 'dashNotes',
-      id: 'notes',
-      map: (doc) => ({
-        id:      Date.now() + Math.random(),
-        title:   doc.title || doc.name || '',
-        type:    doc.type || 'Journal',
-        content: doc.content || doc.body || doc.text || '',
-        date:    toDate(doc.date || doc.createdAt),
-      }),
-    },
-    {
-      label: 'Time tracking entries',
-      candidates: ['time', 'timeEntries', 'timelog', 'timetracking'],
-      dashKey: 'dashTime',
-      id: 'time',
-      map: (doc) => ({
-        id:     Date.now() + Math.random(),
-        client: doc.client || doc.project || '',
-        hours:  toNum(doc.hours || doc.duration || 0),
-        date:   toDate(doc.date || doc.createdAt),
-      }),
-    },
-  ];
+// ─── Module definitions ────────────────────────────────────────────────────
+// Each module is a document at wale-os/{docId}
+// The data is stored as an array in one of the fieldCandidates fields
+const MODULES = [
+  {
+    id: 'finance',
+    label: 'Finance / Transactions',
+    icon: '💰',
+    docId: 'finance',
+    fieldCandidates: ['transactions', 'items', 'entries', 'data', 'finance'],
+    dashKey: 'dashFinance',
+    map: (item) => ({
+      id: Date.now() + Math.random(),
+      type:   item.type   || 'expense',
+      amount: Math.abs(parseFloat(item.amount) || 0),
+      desc:   item.desc   || item.description || item.name || '',
+      cat:    item.cat    || item.category    || 'General',
+      date:   item.date   || today(),
+    }),
+  },
+  {
+    id: 'tasks',
+    label: 'Tasks',
+    icon: '✅',
+    docId: 'tasks',
+    fieldCandidates: ['tasks', 'items', 'entries', 'data'],
+    dashKey: 'dashTasks',
+    map: (item) => ({
+      id:    Date.now() + Math.random(),
+      desc:  item.desc || item.description || item.title || item.task || item.name || '',
+      date:  item.date || item.dueDate || item.deadline || today(),
+      start: item.start || item.startDate || today(),
+      cat:   item.cat  || item.category  || 'General',
+      pri:   normPri(item.pri || item.priority),
+      done:  item.done || item.completed || false,
+    }),
+  },
+  {
+    id: 'today',
+    label: "Today's tasks",
+    icon: '📅',
+    docId: 'today',
+    fieldCandidates: ['tasks', 'items', 'entries', 'data', 'today'],
+    dashKey: 'dashTasks',          // merged into tasks
+    map: (item) => ({
+      id:    Date.now() + Math.random(),
+      desc:  item.desc || item.description || item.title || item.task || item.name || '',
+      date:  item.date || today(),
+      start: item.start || today(),
+      cat:   item.cat  || item.category  || 'General',
+      pri:   normPri(item.pri || item.priority),
+      done:  item.done || item.completed || false,
+    }),
+  },
+  {
+    id: 'gym',
+    label: 'Gym / Workouts',
+    icon: '🏋️',
+    docId: 'gym',
+    fieldCandidates: ['sessions', 'workouts', 'gym', 'items', 'entries', 'data'],
+    dashKey: 'dashGym',
+    map: (item) => ({
+      id:       Date.now() + Math.random(),
+      date:     item.date || today(),
+      type:     item.type || item.workoutType || item.name || 'Full body',
+      duration: parseFloat(item.duration || item.minutes || 60),
+      notes:    item.notes || item.note || '',
+    }),
+  },
+  {
+    id: 'schedule',
+    label: 'Schedule / Time blocks',
+    icon: '🗓️',
+    docId: 'schedule',
+    fieldCandidates: ['blocks', 'schedule', 'timeblocks', 'items', 'entries', 'data'],
+    dashKey: 'dashSchedule',
+    map: (item) => ({
+      id:       Date.now() + Math.random(),
+      title:    item.title || item.activity || item.name || item.label || '',
+      day:      item.day   || 'Monday',
+      time:     item.time  || item.startTime || '09:00',
+      duration: parseFloat(item.duration || item.hours || 1),
+    }),
+  },
+];
 
-  // ─── state ────────────────────────────────────────────────────────────────
-  let db = null;
-  let fetchedData = {};   // { id: [mapped items] }
-  let enabledIds = {};    // { id: true/false }
+// ─── State ────────────────────────────────────────────────────────────────
+let db = null;
+let fetched = {};   // { moduleId: [mapped items] }
 
-  COLLECTION_MAP.forEach(c => { enabledIds[c.id] = true; });
+// ─── Helpers ──────────────────────────────────────────────────────────────
+function today() { return new Date().toISOString().split('T')[0]; }
 
-  // ─── helpers ─────────────────────────────────────────────────────────────
-  function toDate(val) {
-    if (!val) return new Date().toISOString().split('T')[0];
-    if (typeof val === 'string') return val.split('T')[0];
-    if (val.toDate) return val.toDate().toISOString().split('T')[0]; // Firestore Timestamp
-    if (val.seconds) return new Date(val.seconds * 1000).toISOString().split('T')[0];
-    return new Date(val).toISOString().split('T')[0];
+function normPri(v) {
+  if (!v) return 'med';
+  const s = String(v).toLowerCase();
+  if (s === 'high' || s === '3') return 'high';
+  if (s === 'low'  || s === '1') return 'low';
+  return 'med';
+}
+
+function log(id, msg, type = '') {
+  const el = document.getElementById(id);
+  el.style.display = 'block';
+  el.innerHTML += `<span class="${type}">${msg}</span>\n`;
+  el.scrollTop = el.scrollHeight;
+}
+
+function setStatus(id, text, cls) {
+  const el = document.getElementById('status-' + id);
+  if (el) { el.textContent = text; el.className = 'module-status ' + cls; }
+}
+
+// ─── Step 1: Connect ─────────────────────────────────────────────────────
+async function connectFirestore() {
+  const logId = 'connect-log';
+  document.getElementById(logId).innerHTML = '';
+
+  const apiKey     = document.getElementById('cfg-apiKey').value.trim();
+  const projectId  = document.getElementById('cfg-projectId').value.trim();
+  const authDomain = document.getElementById('cfg-authDomain').value.trim();
+  const appId      = document.getElementById('cfg-appId').value.trim();
+
+  if (!apiKey || !projectId) {
+    log(logId, '✗ API Key and Project ID are required.', 'err'); return;
   }
 
-  function toNum(val) {
-    const n = parseFloat(val);
-    return isNaN(n) ? 0 : n;
+  try {
+    log(logId, `Connecting to "${projectId}" …`);
+    const { initializeApp, getFirestore } = window._fb;
+    const app = initializeApp({ apiKey, projectId, authDomain, appId }, 'mig-' + Date.now());
+    db = getFirestore(app);
+    log(logId, '✓ Connected!', 'ok');
+    buildModuleList();
+    document.getElementById('step2').style.display = 'block';
+    document.getElementById('step2').scrollIntoView({ behavior: 'smooth' });
+  } catch (e) {
+    log(logId, '✗ ' + e.message, 'err');
   }
+}
 
-  function log(id, msg, type = '') {
-    const el = document.getElementById(id);
-    el.style.display = 'block';
-    el.innerHTML += `<span class="${type}">${msg}</span>\n`;
-    el.scrollTop = el.scrollHeight;
-  }
-
-  // ─── Step 1: Connect ─────────────────────────────────────────────────────
-  async function connectFirestore() {
-    const logId = 'connect-log';
-    document.getElementById(logId).innerHTML = '';
-
-    const apiKey    = document.getElementById('cfg-apiKey').value.trim();
-    const projectId = document.getElementById('cfg-projectId').value.trim();
-    const authDomain= document.getElementById('cfg-authDomain').value.trim();
-    const appId     = document.getElementById('cfg-appId').value.trim();
-
-    if (!apiKey || !projectId) {
-      log(logId, '✗ API Key and Project ID are required.', 'err');
-      return;
-    }
-
-    try {
-      log(logId, `Connecting to project: ${projectId} …`);
-      const { initializeApp, getFirestore } = window._fb;
-
-      const app = initializeApp({ apiKey, projectId, authDomain, appId }, 'migration-' + Date.now());
-      db = getFirestore(app);
-
-      log(logId, '✓ Connected to Firestore!', 'ok');
-      buildCollectionList();
-      document.getElementById('step2').style.display = 'block';
-    } catch (e) {
-      log(logId, '✗ ' + e.message, 'err');
-    }
-  }
-
-  // ─── Step 2: Collection list UI ──────────────────────────────────────────
-  function buildCollectionList() {
-    const list = document.getElementById('collections-list');
-    list.innerHTML = COLLECTION_MAP.map(c => `
-      <div class="section-toggle">
-        <button class="toggle on" id="tog-${c.id}" onclick="toggleCollection('${c.id}')"></button>
-        <span class="section-label">${c.label}</span>
-        <span class="section-count" id="cnt-${c.id}">will look for: ${c.candidates.join(', ')}</span>
+// ─── Step 2: Module list UI ───────────────────────────────────────────────
+function buildModuleList() {
+  document.getElementById('module-list').innerHTML = MODULES.map(m => `
+    <div class="module-row">
+      <div class="module-icon">${m.icon}</div>
+      <div class="module-info">
+        <div class="module-name">${m.label}</div>
+        <div class="module-path">wale-os / ${m.docId}</div>
       </div>
-    `).join('');
-  }
+      <span class="module-status status-pending" id="status-${m.id}">pending</span>
+    </div>
+  `).join('');
+}
 
-  function toggleCollection(id) {
-    enabledIds[id] = !enabledIds[id];
-    const btn = document.getElementById('tog-' + id);
-    btn.classList.toggle('on', enabledIds[id]);
-  }
+// ─── Step 3: Fetch ────────────────────────────────────────────────────────
+async function fetchAll() {
+  const logId = 'fetch-log';
+  document.getElementById(logId).innerHTML = '';
+  fetched = {};
 
-  // ─── Step 3: Fetch ───────────────────────────────────────────────────────
-  async function fetchAllData() {
-    const logId = 'fetch-log';
-    document.getElementById(logId).innerHTML = '';
-    fetchedData = {};
+  const { doc, getDoc } = window._fb;
 
-    const { collection, getDocs } = window._fb;
+  for (const m of MODULES) {
+    setStatus(m.id, 'fetching…', 'status-pending');
+    try {
+      const snap = await getDoc(doc(db, 'wale-os', m.docId));
 
-    for (const def of COLLECTION_MAP) {
-      if (!enabledIds[def.id]) { log(logId, `— skipping ${def.label}`); continue; }
+      if (!snap.exists()) {
+        log(logId, `— ${m.label}: document "wale-os/${m.docId}" not found`, 'warn');
+        setStatus(m.id, 'not found', 'status-missing');
+        continue;
+      }
 
-      let found = false;
-      for (const name of def.candidates) {
-        try {
-          const snap = await getDocs(collection(db, name));
-          if (!snap.empty) {
-            const raw = snap.docs.map(d => ({ _docId: d.id, ...d.data() }));
-            fetchedData[def.id] = raw.map(def.map);
-            log(logId, `✓ ${def.label}: found "${name}" — ${raw.length} records`, 'ok');
-            document.getElementById('cnt-' + def.id).textContent = `${raw.length} records from "${name}"`;
-            found = true;
-            break;
-          }
-        } catch (e) {
-          // collection doesn't exist or no permission — try next
+      const docData = snap.data();
+
+      // Find the array field
+      let arrayField = null;
+      let arrayData  = null;
+
+      // Try candidate field names first
+      for (const f of m.fieldCandidates) {
+        if (Array.isArray(docData[f]) && docData[f].length > 0) {
+          arrayField = f;
+          arrayData  = docData[f];
+          break;
         }
       }
-      if (!found) {
-        log(logId, `— ${def.label}: not found in any candidate collection`, 'warn');
-        document.getElementById('cnt-' + def.id).textContent = 'not found';
-      }
-    }
 
-    buildPreview();
-    document.getElementById('step3').style.display = 'block';
-    document.getElementById('step4').style.display = 'block';
+      // Fallback: find the first array field in the document
+      if (!arrayData) {
+        for (const [k, v] of Object.entries(docData)) {
+          if (Array.isArray(v) && v.length > 0) {
+            arrayField = k;
+            arrayData  = v;
+            break;
+          }
+        }
+      }
+
+      if (!arrayData || arrayData.length === 0) {
+        log(logId, `— ${m.label}: document found but no array data inside`, 'warn');
+        setStatus(m.id, 'empty', 'status-missing');
+        continue;
+      }
+
+      fetched[m.id] = arrayData.map(m.map);
+      log(logId, `✓ ${m.label}: ${arrayData.length} records (field: "${arrayField}")`, 'ok');
+      setStatus(m.id, `${arrayData.length} records`, 'status-found');
+
+    } catch (e) {
+      log(logId, `✗ ${m.label}: ${e.message}`, 'err');
+      setStatus(m.id, 'error', 'status-missing');
+    }
   }
 
-  // ─── Step 4: Preview ─────────────────────────────────────────────────────
-  function buildPreview() {
-    const container = document.getElementById('preview-container');
-    let html = '';
+  buildPreview();
+  document.getElementById('step3').style.display = 'block';
+  document.getElementById('step4').style.display = 'block';
+  document.getElementById('step3').scrollIntoView({ behavior: 'smooth' });
+}
 
-    for (const def of COLLECTION_MAP) {
-      const items = fetchedData[def.id];
-      if (!items || items.length === 0) continue;
+// ─── Step 4: Preview ──────────────────────────────────────────────────────
+function buildPreview() {
+  let html = '';
+  for (const m of MODULES) {
+    const items = fetched[m.id];
+    if (!items || items.length === 0) continue;
 
-      const sample = items.slice(0, 3);
-      const keys = Object.keys(sample[0]).filter(k => k !== 'id');
+    const sample = items.slice(0, 3);
+    const keys   = Object.keys(sample[0]).filter(k => k !== 'id');
 
-      html += `<div style="margin-bottom:20px;">
-        <strong>${def.label}</strong><span class="count-badge">${items.length}</span>
-        <div style="overflow-x:auto;">
+    html += `<div style="margin-bottom:24px;">
+      <strong>${m.icon} ${m.label}</strong>
+      <span class="count-badge">${items.length}</span>
+      <div style="overflow-x:auto;">
         <table class="preview-table">
           <tr>${keys.map(k => `<th>${k}</th>`).join('')}</tr>
           ${sample.map(row => `<tr>${keys.map(k => `<td title="${String(row[k])}">${String(row[k]).substring(0,40)}</td>`).join('')}</tr>`).join('')}
           ${items.length > 3 ? `<tr><td colspan="${keys.length}" style="color:var(--ink-3);font-style:italic;">…and ${items.length - 3} more</td></tr>` : ''}
-        </table></div>
-      </div>`;
+        </table>
+      </div>
+    </div>`;
+  }
+  document.getElementById('preview-container').innerHTML =
+    html || '<p style="color:var(--ink-3);">No data found.</p>';
+}
+
+// ─── Step 5: Import ───────────────────────────────────────────────────────
+function importAll() {
+  const logId = 'import-log';
+  document.getElementById(logId).innerHTML = '';
+  document.getElementById('success-box').style.display = 'none';
+  document.getElementById('error-box').style.display = 'none';
+
+  let total = 0;
+
+  try {
+    // Group by dashKey (today's tasks merge into dashTasks)
+    const byKey = {};
+    for (const m of MODULES) {
+      const items = fetched[m.id];
+      if (!items || items.length === 0) continue;
+      if (!byKey[m.dashKey]) byKey[m.dashKey] = [];
+      byKey[m.dashKey].push(...items);
     }
 
-    container.innerHTML = html || '<p style="color:var(--ink-3);">No data found in any collection.</p>';
-  }
-
-  // ─── Step 5: Import ───────────────────────────────────────────────────────
-  function importData() {
-    const logId = 'import-log';
-    document.getElementById(logId).innerHTML = '';
-    document.getElementById('success-box').style.display = 'none';
-    document.getElementById('error-box').style.display = 'none';
-
-    let totalImported = 0;
-
-    try {
-      for (const def of COLLECTION_MAP) {
-        const incoming = fetchedData[def.id];
-        if (!incoming || incoming.length === 0) continue;
-
-        const existing = JSON.parse(localStorage.getItem(def.dashKey) || '[]');
-        const merged = [...existing, ...incoming];
-        localStorage.setItem(def.dashKey, JSON.stringify(merged));
-
-        log(logId, `✓ ${def.label}: imported ${incoming.length} records → ${def.dashKey}`, 'ok');
-        totalImported += incoming.length;
-      }
-
-      const box = document.getElementById('success-box');
-      box.style.display = 'block';
-      box.textContent = `✓ Done! Imported ${totalImported} records into Dash. Click "Open Dash dashboard" below.`;
-    } catch (e) {
-      const box = document.getElementById('error-box');
-      box.style.display = 'block';
-      box.textContent = '✗ Import failed: ' + e.message;
-      log(logId, '✗ ' + e.message, 'err');
+    for (const [key, incoming] of Object.entries(byKey)) {
+      const existing = JSON.parse(localStorage.getItem(key) || '[]');
+      localStorage.setItem(key, JSON.stringify([...existing, ...incoming]));
+      log(logId, `✓ ${key}: +${incoming.length} records`, 'ok');
+      total += incoming.length;
     }
-  }
 
-  // expose to global
-  window.connectFirestore = connectFirestore;
-  window.toggleCollection = toggleCollection;
-  window.fetchAllData = fetchAllData;
-  window.importData = importData;
+    const box = document.getElementById('success-box');
+    box.style.display = 'block';
+    box.textContent = `✓ Done! ${total} records imported. Click "Open Dash dashboard" to see your data.`;
+  } catch (e) {
+    const box = document.getElementById('error-box');
+    box.style.display = 'block';
+    box.textContent = '✗ Import failed: ' + e.message;
+    log(logId, '✗ ' + e.message, 'err');
+  }
+}
+
+// expose to global scope
+window.connectFirestore = connectFirestore;
+window.fetchAll = fetchAll;
+window.importAll = importAll;
 </script>
 </body>
 </html>
