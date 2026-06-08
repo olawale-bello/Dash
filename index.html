@@ -332,6 +332,16 @@
     </div>
 
     <div id="dashboard" class="section active">
+      <div style="background:linear-gradient(135deg,#185fa5 0%,#378add 100%);border-radius:var(--radius);padding:22px 24px;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between;overflow:hidden;position:relative;">
+        <div>
+          <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;color:rgba(255,255,255,0.65);margin-bottom:4px;">Welcome back</div>
+          <div style="font-size:22px;font-weight:700;color:#fff;" id="hero-name">Wale</div>
+          <div style="font-size:13px;color:rgba(255,255,255,0.75);margin-top:2px;" id="hero-date"></div>
+        </div>
+        <div style="width:90px;height:90px;background:rgba(255,255,255,0.12);border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+          <i class="ti ti-layout-dashboard" style="font-size:42px;color:#fff;opacity:0.9;"></i>
+        </div>
+      </div>
       <div class="stats-grid">
         <div class="stat feature">
           <div class="stat-label"><i class="ti ti-wallet"></i>Earned this month</div>
@@ -378,6 +388,13 @@
 
     <!-- Tasks Section -->
     <div id="tasks" class="section">
+      <div style="background:linear-gradient(135deg,#dce9f8 0%,#c3d9f4 100%);border-radius:var(--radius);padding:20px 24px;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between;overflow:hidden;">
+        <div>
+          <div style="font-size:18px;font-weight:700;color:var(--ink);">Tasks</div>
+          <div style="font-size:13px;color:var(--ink-2);margin-top:3px;">Stay on top of your work</div>
+        </div>
+        <img src="img-tasks.jpg" style="height:88px;object-fit:contain;filter:drop-shadow(0 6px 18px rgba(24,95,165,0.18));flex-shrink:0;">
+      </div>
       <div class="card">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
           <div class="card-title" style="margin:0;">All tasks</div>
@@ -401,7 +418,7 @@
           <div class="form-row">
             <div class="form-group">
               <label>Category</label>
-              <select id="tasks-cat"><option>General</option><option>Work</option><option>Learning</option><option>Health</option></select>
+              <select id="tasks-cat"><option>General</option><option>Admin</option><option>Client</option><option>Outreach</option><option>Design</option><option>Development</option><option>Marketing</option><option>Research</option><option>Meeting</option><option>Review</option><option>Personal</option><option>Learning</option><option>Health</option><option>Finance</option><option>Other</option></select>
             </div>
             <div class="form-group">
               <label>Priority</label>
@@ -419,6 +436,13 @@
 
     <!-- Invoices Section -->
     <div id="invoices" class="section">
+      <div style="background:linear-gradient(135deg,#e8f4ff 0%,#d0eaff 100%);border-radius:var(--radius);padding:20px 24px;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between;overflow:hidden;">
+        <div>
+          <div style="font-size:18px;font-weight:700;color:var(--ink);">Invoices</div>
+          <div style="font-size:13px;color:var(--ink-2);margin-top:3px;">Manage your billing</div>
+        </div>
+        <img src="img-invoices.jpg" style="height:88px;object-fit:contain;filter:drop-shadow(0 6px 18px rgba(0,0,0,0.12));flex-shrink:0;">
+      </div>
       <div class="card">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
           <div class="card-title" style="margin:0;">Invoices</div>
@@ -547,6 +571,13 @@
 
     <!-- Finance Section -->
     <div id="finance" class="section">
+      <div style="background:linear-gradient(135deg,#1a1a2e 0%,#16213e 100%);border-radius:var(--radius);padding:20px 24px;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between;overflow:hidden;">
+        <div>
+          <div style="font-size:18px;font-weight:700;color:#fff;">Finance</div>
+          <div style="font-size:13px;color:rgba(255,255,255,0.65);margin-top:3px;">Track income & expenses</div>
+        </div>
+        <img src="img-finance.jpg" style="height:88px;object-fit:contain;filter:drop-shadow(0 6px 24px rgba(0,0,0,0.4));flex-shrink:0;">
+      </div>
       <div class="card">
         <div class="card-title">Income & expenses</div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;">
@@ -582,7 +613,11 @@
           </div>
           <div class="form-group">
             <label>Category</label>
-            <select id="finance-cat"><option>General</option><option>Client work</option><option>Software</option><option>Equipment</option><option>Food</option></select>
+            <select id="finance-cat">
+              <optgroup label="Income"><option>Client work</option><option>Freelance</option><option>Other income</option></optgroup>
+              <optgroup label="Expenses"><option>Food</option><option>Transport</option><option>Accommodation</option><option>Software</option><option>Equipment</option><option>Gym</option><option>Health</option><option>Subscriptions</option><option>Utilities</option><option>Shopping</option><option>Entertainment</option><option>Travel</option><option>Tax</option><option>Gift</option><option>Other expense</option></optgroup>
+              <optgroup label="Other"><option>General</option></optgroup>
+            </select>
           </div>
           <div style="display:flex;gap:8px;">
             <button class="btn" onclick="save('finance')">Save</button>
@@ -1260,7 +1295,7 @@
     const strikethrough = task.done ? 'text-decoration:line-through' : '';
     const checked = task.done ? 'checked' : '';
     const dateRange = task.start && task.start !== task.date ? `${task.start} → ${task.date}` : task.date;
-    const catPalette = { admin: '#185fa5', client: '#1d9e75', outreach: '#854f0b', personal: '#7c3aed', general: '#5c636e' };
+    const catPalette = { admin: '#185fa5', client: '#1d9e75', outreach: '#854f0b', personal: '#7c3aed', design: '#d946a8', development: '#0891b2', marketing: '#ea580c', research: '#6366f1', meeting: '#0284c7', review: '#b45309', learning: '#16a34a', health: '#dc2626', finance: '#ca8a04', other: '#64748b', general: '#5c636e' };
     const catColor = catPalette[(task.cat||'general').toLowerCase()] || '#5c636e';
     return `<div class="item" style="${opacity}">
       <div class="item-left" style="display:flex;gap:10px;align-items:center;">
@@ -2071,12 +2106,10 @@
     document.getElementById('user-name').textContent = userData.name;
     document.getElementById('greeting-text').textContent = getTimeBasedGreeting();
     const today = new Date();
-    document.getElementById('greet-date').textContent = today.toLocaleDateString('en-US', {
-      weekday: 'long',
-      month: 'long',
-      day: 'numeric',
-      year: 'numeric',
-    });
+    const dateStr = today.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
+    document.getElementById('greet-date').textContent = dateStr;
+    document.getElementById('hero-name').textContent = userData.name;
+    document.getElementById('hero-date').textContent = dateStr;
     const initials = userData.name.split(' ').map(w => w[0]).join('').toUpperCase();
     document.getElementById('avatar').textContent = initials;
     const currencyEl = document.getElementById('currency-select');
