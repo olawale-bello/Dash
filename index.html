@@ -1919,16 +1919,54 @@
   }
 
   // ========== FIRESTORE SYNC ==========
+  // Reads from wale-os (old dashboard) and writes to dashData (new primary store)
+  async function migrateWaleOs() {
+    const mods = [
+      { docId: 'finance',  cands: ['transactions','items','entries','data'], lsKey: 'dashFinance',  fsDoc: 'finance',
+        map: r => ({ id: r.id||Date.now()+Math.random(), type: r.type||'expense', amount: Math.abs(parseFloat(r.amount)||0), desc: r.desc||r.description||'', cat: r.cat||r.category||'General', date: r.date||defaultDate }) },
+      { docId: 'gym',      cands: ['sessions','workouts','gym','items','entries','data'], lsKey: 'dashGym',     fsDoc: 'gym',
+        map: r => ({ id: r.id||Date.now()+Math.random(), date: r.date||defaultDate, type: r.type||'Full body', duration: parseFloat(r.duration||60), notes: r.notes||'' }) },
+      { docId: 'tasks',    cands: ['tasks','items','entries','data'], lsKey: 'dashTasks',   fsDoc: 'tasks',
+        map: r => ({ id: r.id||Date.now()+Math.random(), desc: r.desc||r.title||'', date: r.date||defaultDate, start: r.start||defaultDate, cat: r.cat||'General', pri: r.pri||'med', done: r.done||false }) },
+      { docId: 'today',    cands: ['tasks','items','entries','data','today'], lsKey: 'dashTasks',   fsDoc: 'tasks',
+        map: r => ({ id: r.id||Date.now()+Math.random(), desc: r.desc||r.title||'', date: r.date||defaultDate, start: r.start||defaultDate, cat: r.cat||'General', pri: r.pri||'med', done: r.done||false }) },
+      { docId: 'schedule', cands: ['blocks','schedule','timeblocks','items','entries','data'], lsKey: 'dashSchedule', fsDoc: 'schedule',
+        map: r => ({ id: r.id||Date.now()+Math.random(), title: r.title||r.name||'', day: r.day||'Monday', time: r.time||'09:00', duration: parseFloat(r.duration||1) }) },
+    ];
+    for (const mod of mods) {
+      try {
+        const snap = await db.collection('wale-os').doc(mod.docId).get();
+        if (!snap.exists) continue;
+        const raw = snap.data();
+        let arr = null;
+        for (const f of mod.cands) { if (Array.isArray(raw[f])) { arr = raw[f]; break; } }
+        if (!arr || !arr.length) continue;
+        const mapped = arr.map(mod.map);
+        // Merge with anything already in localStorage for this key
+        const existing = JSON.parse(localStorage.getItem(mod.lsKey) || '[]');
+        const existIds = new Set(existing.map(x => x.id));
+        const merged = [...existing, ...mapped.filter(x => !existIds.has(x.id))];
+        localStorage.setItem(mod.lsKey, JSON.stringify(merged));
+        db.collection('dashData').doc(mod.fsDoc).set({ data: merged }).catch(() => {});
+      } catch (e) { /* silent — wale-os doc may not exist */ }
+    }
+  }
+
   async function syncFromFirestore() {
     if (!db) return;
     try {
+      // Pull from dashData (primary store)
+      let anyData = false;
       const pulls = Object.entries(FIRESTORE_MAP).map(async ([lsKey, fsDoc]) => {
         const snap = await db.collection('dashData').doc(fsDoc).get();
-        if (snap.exists && Array.isArray(snap.data().data)) {
+        if (snap.exists && Array.isArray(snap.data().data) && snap.data().data.length > 0) {
           localStorage.setItem(lsKey, JSON.stringify(snap.data().data));
+          anyData = true;
         }
       });
       await Promise.all(pulls);
+      // If dashData is empty, seed from wale-os (old dashboard)
+      if (!anyData) await migrateWaleOs();
     } catch (e) {
       console.warn('Firestore sync failed:', e);
     }
