@@ -106,17 +106,28 @@
   <div style="margin-top:16px;"><a class="link" href="index.html">→ Open Dash dashboard</a></div>
 </div>
 
-<script src="config.js"></script>
 <script>
-  // Auto-fill Firebase fields from config.js if available
+  const DASH_CONFIG = {
+    user: {
+      name:          'Wale',
+      currency:      'EUR',
+      monthlyTarget: 2000,
+    },
+    firebase: {
+      apiKey:            'AIzaSyD2ovVm9wfJQhFszp3SxWeJcoagfIZdgtI',
+      authDomain:        'wale-0s.firebaseapp.com',
+      projectId:         'wale-0s',
+      storageBucket:     'wale-0s.firebasestorage.app',
+      messagingSenderId: '487487301272',
+      appId:             '1:487487301272:web:aa7ac81bbf0890d4e3d2ed',
+    },
+  };
   window.addEventListener('DOMContentLoaded', () => {
-    if (typeof DASH_CONFIG !== 'undefined' && DASH_CONFIG.firebase) {
-      const f = DASH_CONFIG.firebase;
-      document.getElementById('cfg-apiKey').value     = f.apiKey     || '';
-      document.getElementById('cfg-projectId').value  = f.projectId  || '';
-      document.getElementById('cfg-authDomain').value = f.authDomain || '';
-      document.getElementById('cfg-appId').value      = f.appId      || '';
-    }
+    const f = DASH_CONFIG.firebase;
+    document.getElementById('cfg-apiKey').value     = f.apiKey;
+    document.getElementById('cfg-projectId').value  = f.projectId;
+    document.getElementById('cfg-authDomain').value = f.authDomain;
+    document.getElementById('cfg-appId').value      = f.appId;
   });
 </script>
 <script type="module">
