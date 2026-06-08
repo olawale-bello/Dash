@@ -13,6 +13,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5.0.4/dist/tesseract.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 <script>
@@ -160,6 +161,12 @@
   .gym-stat.feature .gym-stat-label{color:#b5d4f4;}
   .gym-stat-sub{font-size:11px;color:var(--ink-3);}
   .gym-stat.feature .gym-stat-sub{color:#85b7eb;}
+  .fin-tab-bar{display:flex;gap:4px;background:var(--surface-2);border:1px solid var(--line);border-radius:10px;padding:4px;margin-bottom:16px;}
+  .fin-tab{flex:1;padding:7px 12px;background:none;border:none;border-radius:7px;font-size:13px;font-weight:600;cursor:pointer;color:var(--ink-2);font-family:inherit;transition:all 0.15s;}
+  .fin-tab.active{background:var(--surface);color:var(--accent);box-shadow:0 1px 4px rgba(0,0,0,0.08);}
+  .rep-stat{background:var(--surface-2);border:1px solid var(--line);border-radius:var(--radius-sm);padding:14px 16px;}
+  .rep-stat-label{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;color:var(--ink-3);margin-bottom:4px;}
+  .rep-stat-val{font-size:22px;font-weight:700;color:var(--ink);}
   .finance-actions{flex-wrap:wrap;}
   .greet-info{min-width:0;}
   .stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:16px;}
@@ -584,53 +591,101 @@
           <i class="ti ti-pig-money" style="font-size:40px;color:rgba(255,255,255,0.9);"></i>
         </div>
       </div>
-      <div class="card">
-        <div class="card-title">Income & expenses</div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;">
-          <div class="stat">
-            <div class="stat-label">Total income</div>
-            <div class="stat-value" id="finance-income">€0</div>
-          </div>
-          <div class="stat">
-            <div class="stat-label">Total expenses</div>
-            <div class="stat-value" style="color:var(--red);" id="finance-expense">€0</div>
-          </div>
-        </div>
-        <div class="finance-actions" style="display:flex;gap:8px;margin-bottom:12px;">
-          <button class="btn" onclick="openForm('finance')"><i class="ti ti-plus" style="margin-right:5px;"></i>Add transaction</button>
-          <button class="btn" onclick="document.getElementById('receipt-upload').click()" style="background:var(--green);"><i class="ti ti-camera" style="margin-right:5px;"></i>Scan receipt</button>
-          <input type="file" id="receipt-upload" accept="image/*" style="display:none;" onchange="scanReceipt(this)">
-        </div>
-        <div id="ocr-status" style="display:none;background:var(--accent-soft);padding:10px;border-radius:var(--radius-sm);margin-bottom:12px;color:var(--accent);font-size:13px;"></div>
-        <div id="finance-form" style="background:var(--surface-2);padding:14px;border-radius:var(--radius-sm);margin:16px 0;display:none;">
-          <div class="form-row">
-            <div class="form-group">
-              <label>Type</label>
-              <select id="finance-type"><option value="income">Income</option><option value="expense">Expense</option></select>
+      <div class="fin-tab-bar">
+        <button class="fin-tab active" id="fin-tab-txn" onclick="financeTab('txn')"><i class="ti ti-list" style="margin-right:5px;"></i>Transactions</button>
+        <button class="fin-tab" id="fin-tab-rep" onclick="financeTab('rep')"><i class="ti ti-chart-bar" style="margin-right:5px;"></i>Reports</button>
+      </div>
+
+      <!-- Transactions view -->
+      <div id="fin-view-txn">
+        <div class="card">
+          <div class="card-title">Income & expenses</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;">
+            <div class="stat">
+              <div class="stat-label">Total income</div>
+              <div class="stat-value" id="finance-income">€0</div>
             </div>
-            <div class="form-group">
-              <label id="finance-amount-label">Amount</label>
-              <input id="finance-amount" type="number" placeholder="0.00">
+            <div class="stat">
+              <div class="stat-label">Total expenses</div>
+              <div class="stat-value" style="color:var(--red);" id="finance-expense">€0</div>
             </div>
           </div>
-          <div class="form-group">
-            <label>Description</label>
-            <input id="finance-desc" type="text" placeholder="e.g., Fiverr project">
+          <div class="finance-actions" style="display:flex;gap:8px;margin-bottom:12px;">
+            <button class="btn" onclick="openForm('finance')"><i class="ti ti-plus" style="margin-right:5px;"></i>Add transaction</button>
+            <button class="btn" onclick="document.getElementById('receipt-upload').click()" style="background:var(--green);"><i class="ti ti-camera" style="margin-right:5px;"></i>Scan receipt</button>
+            <input type="file" id="receipt-upload" accept="image/*" style="display:none;" onchange="scanReceipt(this)">
           </div>
-          <div class="form-group">
-            <label>Category</label>
-            <select id="finance-cat">
-              <optgroup label="Income"><option>Client work</option><option>Freelance</option><option>Other income</option></optgroup>
-              <optgroup label="Expenses"><option>Food</option><option>Transport</option><option>Accommodation</option><option>Software</option><option>Equipment</option><option>Gym</option><option>Health</option><option>Subscriptions</option><option>Utilities</option><option>Shopping</option><option>Entertainment</option><option>Travel</option><option>Tax</option><option>Gift</option><option>Other expense</option></optgroup>
-              <optgroup label="Other"><option>General</option></optgroup>
-            </select>
+          <div id="ocr-status" style="display:none;background:var(--accent-soft);padding:10px;border-radius:var(--radius-sm);margin-bottom:12px;color:var(--accent);font-size:13px;"></div>
+          <div id="finance-form" style="background:var(--surface-2);padding:14px;border-radius:var(--radius-sm);margin:16px 0;display:none;">
+            <div class="form-row">
+              <div class="form-group">
+                <label>Type</label>
+                <select id="finance-type"><option value="income">Income</option><option value="expense">Expense</option></select>
+              </div>
+              <div class="form-group">
+                <label id="finance-amount-label">Amount</label>
+                <input id="finance-amount" type="number" placeholder="0.00">
+              </div>
+            </div>
+            <div class="form-group">
+              <label>Description</label>
+              <input id="finance-desc" type="text" placeholder="e.g., Fiverr project">
+            </div>
+            <div class="form-group">
+              <label>Category</label>
+              <select id="finance-cat">
+                <optgroup label="Income"><option>Client work</option><option>Freelance</option><option>Other income</option></optgroup>
+                <optgroup label="Expenses"><option>Food</option><option>Transport</option><option>Accommodation</option><option>Software</option><option>Equipment</option><option>Gym</option><option>Health</option><option>Subscriptions</option><option>Utilities</option><option>Shopping</option><option>Entertainment</option><option>Travel</option><option>Tax</option><option>Gift</option><option>Other expense</option></optgroup>
+                <optgroup label="Other"><option>General</option></optgroup>
+              </select>
+            </div>
+            <div style="display:flex;gap:8px;">
+              <button class="btn" onclick="save('finance')">Save</button>
+              <button class="btn-outline" onclick="closeForm('finance')">Cancel</button>
+            </div>
           </div>
-          <div style="display:flex;gap:8px;">
-            <button class="btn" onclick="save('finance')">Save</button>
-            <button class="btn-outline" onclick="closeForm('finance')">Cancel</button>
+          <div id="finance-list"></div>
+        </div>
+      </div>
+
+      <!-- Reports view -->
+      <div id="fin-view-rep" style="display:none;">
+        <div class="stats-grid" style="margin-bottom:16px;">
+          <div class="rep-stat">
+            <div class="rep-stat-label">Net balance</div>
+            <div class="rep-stat-val" id="rep-net">€0</div>
+          </div>
+          <div class="rep-stat">
+            <div class="rep-stat-label">Avg monthly spend</div>
+            <div class="rep-stat-val" id="rep-avg">€0</div>
+          </div>
+          <div class="rep-stat">
+            <div class="rep-stat-label">Top expense</div>
+            <div class="rep-stat-val" style="font-size:14px;" id="rep-top-cat">—</div>
+          </div>
+          <div class="rep-stat">
+            <div class="rep-stat-label">Savings rate</div>
+            <div class="rep-stat-val" id="rep-savings">0%</div>
           </div>
         </div>
-        <div id="finance-list"></div>
+        <div class="card">
+          <div class="card-title">Monthly Overview (last 6 months)</div>
+          <canvas id="chart-monthly" height="160"></canvas>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:16px;">
+          <div class="card">
+            <div class="card-title" style="font-size:13px;">Spending by Category</div>
+            <canvas id="chart-categories" height="200"></canvas>
+          </div>
+          <div class="card">
+            <div class="card-title" style="font-size:13px;">Income Sources</div>
+            <canvas id="chart-income" height="200"></canvas>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title">Balance Over Time</div>
+          <canvas id="chart-balance" height="140"></canvas>
+        </div>
       </div>
     </div>
 
@@ -1692,6 +1747,106 @@
     const open = el.style.display !== 'none';
     el.style.display      = open ? 'none' : 'block';
     icon.style.transform  = open ? '' : 'rotate(90deg)';
+  }
+
+  // ── Finance tabs & reports ─────────────────────────────────────────────────
+  function financeTab(tab) {
+    document.getElementById('fin-view-txn').style.display = tab === 'txn' ? 'block' : 'none';
+    document.getElementById('fin-view-rep').style.display = tab === 'rep' ? 'block' : 'none';
+    document.getElementById('fin-tab-txn').classList.toggle('active', tab === 'txn');
+    document.getElementById('fin-tab-rep').classList.toggle('active', tab === 'rep');
+    if (tab === 'rep') renderFinanceReports();
+  }
+
+  let _finCharts = {};
+  function renderFinanceReports() {
+    Object.values(_finCharts).forEach(c => c.destroy());
+    _finCharts = {};
+
+    const finance = getStorageData('finance');
+    const sym     = currencySymbols[userData.currency] || '€';
+
+    // ── Summary stats ────────────────────────────────────────────────────────
+    const income  = finance.filter(f => f.type === 'income').reduce((s, f) => s + f.amount, 0);
+    const expense = finance.filter(f => f.type === 'expense').reduce((s, f) => s + f.amount, 0);
+    const net     = income - expense;
+    const el      = document.getElementById('rep-net');
+    el.textContent = formatCurrency(net);
+    el.style.color = net >= 0 ? 'var(--green)' : 'var(--red)';
+
+    // Avg monthly spend
+    const months = [...new Set(finance.filter(f => f.type === 'expense').map(f => (f.date || '').slice(0, 7)).filter(Boolean))];
+    document.getElementById('rep-avg').textContent = months.length ? formatCurrency(expense / months.length) : formatCurrency(0);
+
+    // Top expense category
+    const expByCat = {};
+    finance.filter(f => f.type === 'expense').forEach(f => { expByCat[f.cat || 'General'] = (expByCat[f.cat || 'General'] || 0) + f.amount; });
+    const topCat = Object.entries(expByCat).sort((a, b) => b[1] - a[1])[0];
+    document.getElementById('rep-top-cat').textContent = topCat ? topCat[0] : '—';
+
+    // Savings rate
+    const rate = income > 0 ? Math.round(((income - expense) / income) * 100) : 0;
+    const rateEl = document.getElementById('rep-savings');
+    rateEl.textContent = rate + '%';
+    rateEl.style.color = rate >= 0 ? 'var(--green)' : 'var(--red)';
+
+    const chartColors = ['#185fa5','#1d9e75','#d85a30','#854f0b','#7c3aed','#0891b2','#dc2626','#ca8a04','#6366f1','#64748b'];
+    const gridColor   = 'rgba(0,0,0,0.06)';
+
+    // ── Monthly bar chart ─────────────────────────────────────────────────────
+    const last6 = Array.from({ length: 6 }, (_, i) => {
+      const d = new Date(); d.setDate(1); d.setMonth(d.getMonth() - (5 - i));
+      return d.toISOString().slice(0, 7);
+    });
+    const monthLabels   = last6.map(m => { const [y, mo] = m.split('-'); return new Date(y, mo - 1).toLocaleString('default', { month: 'short' }); });
+    const monthlyIncome  = last6.map(m => finance.filter(f => f.type === 'income'  && (f.date || '').startsWith(m)).reduce((s, f) => s + f.amount, 0));
+    const monthlyExpense = last6.map(m => finance.filter(f => f.type === 'expense' && (f.date || '').startsWith(m)).reduce((s, f) => s + f.amount, 0));
+
+    _finCharts.monthly = new Chart(document.getElementById('chart-monthly'), {
+      type: 'bar',
+      data: {
+        labels: monthLabels,
+        datasets: [
+          { label: 'Income',   data: monthlyIncome,  backgroundColor: '#1d9e75', borderRadius: 6 },
+          { label: 'Expenses', data: monthlyExpense, backgroundColor: '#d85a30', borderRadius: 6 },
+        ],
+      },
+      options: { responsive: true, plugins: { legend: { position: 'top' } }, scales: { y: { beginAtZero: true, grid: { color: gridColor }, ticks: { callback: v => sym + v } }, x: { grid: { display: false } } } },
+    });
+
+    // ── Spending donut ────────────────────────────────────────────────────────
+    if (Object.keys(expByCat).length) {
+      _finCharts.categories = new Chart(document.getElementById('chart-categories'), {
+        type: 'doughnut',
+        data: { labels: Object.keys(expByCat), datasets: [{ data: Object.values(expByCat), backgroundColor: chartColors, borderWidth: 2, borderColor: '#fff' }] },
+        options: { responsive: true, plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 11 } } } } },
+      });
+    }
+
+    // ── Income donut ──────────────────────────────────────────────────────────
+    const incByCat = {};
+    finance.filter(f => f.type === 'income').forEach(f => { incByCat[f.cat || 'General'] = (incByCat[f.cat || 'General'] || 0) + f.amount; });
+    if (Object.keys(incByCat).length) {
+      _finCharts.income = new Chart(document.getElementById('chart-income'), {
+        type: 'doughnut',
+        data: { labels: Object.keys(incByCat), datasets: [{ data: Object.values(incByCat), backgroundColor: chartColors, borderWidth: 2, borderColor: '#fff' }] },
+        options: { responsive: true, plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 11 } } } } },
+      });
+    }
+
+    // ── Balance line chart ────────────────────────────────────────────────────
+    const sorted = [...finance].sort((a, b) => new Date(a.date) - new Date(b.date));
+    let running = 0;
+    const balDates = [], balData = [];
+    sorted.forEach(f => { running += f.type === 'income' ? f.amount : -f.amount; balDates.push(f.date); balData.push(+running.toFixed(2)); });
+
+    if (balData.length) {
+      _finCharts.balance = new Chart(document.getElementById('chart-balance'), {
+        type: 'line',
+        data: { labels: balDates, datasets: [{ label: 'Net Balance', data: balData, borderColor: '#185fa5', backgroundColor: 'rgba(24,95,165,0.08)', fill: true, tension: 0.4, pointRadius: 2 }] },
+        options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { grid: { color: gridColor }, ticks: { callback: v => sym + v } }, x: { ticks: { maxTicksLimit: 8, maxRotation: 0 }, grid: { display: false } } } },
+      });
+    }
   }
 
   function refreshGym() {
