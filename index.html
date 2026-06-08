@@ -928,7 +928,10 @@
       defaults: { done: false, start: defaultDate, date: defaultDate, cat: 'General', pri: 'med' },
       validation: (data) => data.desc,
       emptyMsg: 'No tasks yet',
-      sort: (a, b) => new Date(b.date) - new Date(a.date),
+      sort: (a, b) => {
+        if (a.done !== b.done) return a.done ? 1 : -1;
+        return new Date(a.date) - new Date(b.date);
+      },
     },
     invoices: {
       storage: 'dashInvoices',
@@ -1431,9 +1434,37 @@
   }
 
   // ========== REFRESH FUNCTIONS ==========
+  function taskGroupHeader(label, color, count) {
+    return `<div style="display:flex;align-items:center;gap:8px;padding:10px 0 4px;margin-top:2px;">
+      <span style="font-size:10.5px;font-weight:700;color:${color};text-transform:uppercase;letter-spacing:0.07em;">${label}</span>
+      <span style="font-size:10.5px;background:var(--surface-2);border:1px solid var(--line);border-radius:999px;padding:1px 7px;color:var(--ink-3);">${count}</span>
+      <div style="flex:1;height:1px;background:var(--line);"></div>
+    </div>`;
+  }
+
   function refreshTasks() {
-    const tasks = getStorageData('tasks');
-    renderList('tasks', tasks, renderTaskItem);
+    const all = getStorageData('tasks');
+    const container = document.getElementById('tasks-list');
+    if (!all || all.length === 0) {
+      container.innerHTML = '<p style="color:var(--ink-3);font-size:13px;">No tasks yet</p>';
+      return;
+    }
+
+    const today = defaultDate;
+    const byDateAsc = (a, b) => new Date(a.date) - new Date(b.date);
+
+    const overdue  = all.filter(t => !t.done && t.date < today).sort(byDateAsc);
+    const todayArr = all.filter(t => !t.done && t.date === today);
+    const upcoming = all.filter(t => !t.done && t.date > today).sort(byDateAsc);
+    const done     = all.filter(t => t.done).sort((a, b) => new Date(b.date) - new Date(a.date));
+
+    let html = '';
+    if (overdue.length)  html += taskGroupHeader('Overdue',   'var(--red)',    overdue.length)  + overdue.map(renderTaskItem).join('');
+    if (todayArr.length) html += taskGroupHeader('Today',     'var(--accent)', todayArr.length) + todayArr.map(renderTaskItem).join('');
+    if (upcoming.length) html += taskGroupHeader('Upcoming',  'var(--ink-2)',  upcoming.length) + upcoming.map(renderTaskItem).join('');
+    if (done.length)     html += taskGroupHeader('Completed', 'var(--ink-3)',  done.length)     + done.map(renderTaskItem).join('');
+
+    container.innerHTML = html;
   }
 
   function refreshInvoices() {
