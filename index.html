@@ -1260,14 +1260,17 @@
     const strikethrough = task.done ? 'text-decoration:line-through' : '';
     const checked = task.done ? 'checked' : '';
     const dateRange = task.start && task.start !== task.date ? `${task.start} → ${task.date}` : task.date;
+    const catPalette = { admin: '#185fa5', client: '#1d9e75', outreach: '#854f0b', personal: '#7c3aed', general: '#5c636e' };
+    const catColor = catPalette[(task.cat||'general').toLowerCase()] || '#5c636e';
     return `<div class="item" style="${opacity}">
       <div class="item-left" style="display:flex;gap:10px;align-items:center;">
         <input type="checkbox" ${checked} onchange="toggleTask('${task.id}')" style="cursor:pointer;width:18px;height:18px;">
         <div>
           <div class="item-title" style="${strikethrough}">${task.desc}</div>
-          <div class="item-meta">${task.cat} · ${dateRange}</div>
+          <div class="item-meta">${dateRange}</div>
         </div>
       </div>
+      <span style="font-size:10px;font-weight:700;text-transform:uppercase;color:${catColor};background:${catColor}22;padding:2px 8px;border-radius:999px;letter-spacing:0.05em;white-space:nowrap;flex-shrink:0;">${task.cat||'General'}</span>
       <span class="pill ${task.priority}">${task.priority}</span>
       <button class="btn-small" title="Edit" onclick="editItem('tasks','${task.id}')" style="color:var(--accent);"><i class="ti ti-pencil"></i></button>
       <button class="btn-small" onclick="deleteItem('tasks','${task.id}')"><i class="ti ti-trash"></i></button>
@@ -1528,11 +1531,57 @@
 
   function refreshFinance() {
     const finance = getStorageData('finance');
-    const income = finance.filter(f => f.type === 'income').reduce((s, f) => s + f.amount, 0);
+    const income  = finance.filter(f => f.type === 'income').reduce((s, f) => s + f.amount, 0);
     const expense = finance.filter(f => f.type === 'expense').reduce((s, f) => s + f.amount, 0);
-    document.getElementById('finance-income').textContent = formatCurrency(income);
+    document.getElementById('finance-income').textContent  = formatCurrency(income);
     document.getElementById('finance-expense').textContent = formatCurrency(expense);
-    renderList('finance', finance, renderFinanceItem);
+
+    const container = document.getElementById('finance-list');
+    if (!finance || finance.length === 0) {
+      container.innerHTML = '<p style="color:var(--ink-3);font-size:13px;">No transactions yet</p>';
+      return;
+    }
+
+    // Group by category
+    const byCat = {};
+    finance.forEach(f => {
+      const c = f.cat || 'General';
+      if (!byCat[c]) byCat[c] = [];
+      byCat[c].push(f);
+    });
+
+    // Sort categories by total descending
+    const sorted = Object.entries(byCat).sort((a, b) =>
+      b[1].reduce((s, f) => s + f.amount, 0) - a[1].reduce((s, f) => s + f.amount, 0)
+    );
+
+    container.innerHTML = sorted.map(([cat, items]) => {
+      const total    = items.reduce((s, f) => s + f.amount, 0);
+      const allIn    = items.every(f => f.type === 'income');
+      const color    = allIn ? 'var(--green)' : 'var(--red)';
+      const catId    = 'fc-' + cat.replace(/[^a-z0-9]/gi, '-').toLowerCase();
+      return `
+        <div onclick="toggleFinanceCat('${catId}')" style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;cursor:pointer;border-bottom:1px solid var(--line);user-select:none;">
+          <div style="display:flex;align-items:center;gap:8px;">
+            <i class="ti ti-chevron-right" id="${catId}-icon" style="font-size:13px;color:var(--ink-3);transition:transform 0.2s;"></i>
+            <span style="font-weight:600;font-size:13px;">${cat}</span>
+            <span style="font-size:11px;background:var(--surface-2);border:1px solid var(--line);border-radius:999px;padding:1px 7px;color:var(--ink-3);">${items.length}</span>
+          </div>
+          <span style="color:${color};font-weight:600;">${formatCurrency(total)}</span>
+        </div>
+        <div id="${catId}" style="display:none;">
+          ${items.map(renderFinanceItem).join('')}
+        </div>`;
+    }).join('');
+  }
+
+  function toggleFinanceCat(id) {
+    const el   = document.getElementById(id);
+    const icon = document.getElementById(id + '-icon');
+    if (!el) return;
+    const open = el.style.display !== 'none';
+    el.style.display      = open ? 'none' : 'block';
+    icon.style.transform  = open ? '' : 'rotate(90deg)';
   }
 
   function refreshGym() {
