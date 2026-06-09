@@ -3079,8 +3079,10 @@
 
   function signInGoogle() {
     const provider = new firebase.auth.GoogleAuthProvider();
-    const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
-    if (isMobile) {
+    // Safari blocks popups — use redirect only for Safari/iOS
+    // Chrome on Android supports popups via user gesture and redirect has cookie issues
+    const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+    if (isSafari) {
       firebase.auth().signInWithRedirect(provider).catch(e => showAuthError(e.message));
     } else {
       firebase.auth().signInWithPopup(provider).catch(e => showAuthError(e.message));
