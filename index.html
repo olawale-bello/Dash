@@ -422,6 +422,15 @@
         <button class="fin-tab" id="tasks-tab-cal" onclick="tasksTab('cal')"><i class="ti ti-calendar-week" style="margin-right:5px;"></i>Calendar</button>
       </div>
 
+      <!-- Notification permission banner -->
+      <div id="notif-banner" style="display:none;background:var(--amber-soft);border:1px solid #d4a847;border-radius:var(--radius-sm);padding:10px 14px;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;gap:10px;">
+        <div style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--amber);">
+          <i class="ti ti-bell" style="font-size:16px;"></i>
+          <span>Enable reminders to get a notification 15 min before each task</span>
+        </div>
+        <button class="btn" style="background:var(--amber);white-space:nowrap;font-size:12px;padding:6px 12px;" onclick="enableReminders()">Enable</button>
+      </div>
+
       <!-- List view -->
       <div id="tasks-list-view">
       <div class="card">
@@ -2779,6 +2788,57 @@
       refresh();
       renderApp();
     });
+
+    startReminderChecker();
+  }
+
+  // ── Task reminders ──────────────────────────────────────────────────────────
+  const _notified = new Set();
+
+  function showNotifBanner() {
+    const banner = document.getElementById('notif-banner');
+    if (!banner) return;
+    if (!('Notification' in window)) { banner.style.display = 'none'; return; }
+    banner.style.display = Notification.permission === 'granted' ? 'none' : 'flex';
+  }
+
+  function enableReminders() {
+    if (!('Notification' in window)) { alert('Your browser does not support notifications.'); return; }
+    Notification.requestPermission().then(perm => {
+      showNotifBanner();
+      if (perm === 'granted') {
+        new Notification('Reminders on', { body: "You'll be notified 15 min before each task." });
+      }
+    });
+  }
+
+  function checkTaskReminders() {
+    if (!('Notification' in window) || Notification.permission !== 'granted') return;
+    const tasks    = getStorageData('tasks');
+    const now      = new Date();
+    const todayStr = now.toISOString().slice(0, 10);
+
+    tasks.filter(t => t.date === todayStr && t.timeStart && !t.done).forEach(t => {
+      const [h, m] = t.timeStart.split(':').map(Number);
+      const taskTime = new Date(now);
+      taskTime.setHours(h, m, 0, 0);
+      const diffMin = (taskTime - now) / 60000;
+      const key = `${t.id}_${todayStr}`;
+      if (diffMin >= 14 && diffMin < 15.5 && !_notified.has(key)) {
+        _notified.add(key);
+        new Notification(`Starting in 15 min`, {
+          body: `${t.desc} at ${fmt12(t.timeStart)}`,
+          icon: '/favicon.ico',
+          tag:  key,
+        });
+      }
+    });
+  }
+
+  function startReminderChecker() {
+    showNotifBanner();
+    checkTaskReminders();
+    setInterval(checkTaskReminders, 60000);
   }
 
   function getTimeBasedGreeting() {
