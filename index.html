@@ -167,6 +167,15 @@
   .rep-stat{background:var(--surface-2);border:1px solid var(--line);border-radius:var(--radius-sm);padding:14px 16px;}
   .rep-stat-label{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;color:var(--ink-3);margin-bottom:4px;}
   .rep-stat-val{font-size:22px;font-weight:700;color:var(--ink);}
+  .cal-grid{display:grid;grid-template-columns:44px repeat(7,1fr);}
+  .cal-day-col{position:relative;border-left:1px solid var(--line);}
+  .cal-hour-line{position:absolute;left:0;right:0;border-top:1px solid var(--line);pointer-events:none;}
+  .cal-half-line{position:absolute;left:0;right:0;border-top:1px dashed var(--line);pointer-events:none;opacity:0.6;}
+  .cal-event{position:absolute;left:2px;right:2px;border-radius:6px;padding:4px 6px;overflow:hidden;font-size:11px;cursor:pointer;box-sizing:border-box;}
+  .cal-event-title{font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .cal-event-time{opacity:0.8;font-size:10px;margin-top:1px;}
+  .cal-time-label{font-size:10px;color:var(--ink-3);text-align:right;padding-right:6px;line-height:1;transform:translateY(-6px);}
+  .cal-today-col{background:rgba(24,95,165,0.03);}
   .finance-actions{flex-wrap:wrap;}
   .greet-info{min-width:0;}
   .stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:16px;}
@@ -404,6 +413,13 @@
           <i class="ti ti-checklist" style="font-size:40px;color:#185fa5;"></i>
         </div>
       </div>
+      <div class="fin-tab-bar">
+        <button class="fin-tab active" id="tasks-tab-list" onclick="tasksTab('list')"><i class="ti ti-list" style="margin-right:5px;"></i>List</button>
+        <button class="fin-tab" id="tasks-tab-cal" onclick="tasksTab('cal')"><i class="ti ti-calendar-week" style="margin-right:5px;"></i>Calendar</button>
+      </div>
+
+      <!-- List view -->
+      <div id="tasks-list-view">
       <div class="card">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
           <div class="card-title" style="margin:0;">All tasks</div>
@@ -450,6 +466,31 @@
           </div>
         </div>
         <div id="tasks-list"></div>
+      </div>
+      </div><!-- end tasks-list-view -->
+
+      <!-- Calendar view -->
+      <div id="tasks-cal-view" style="display:none;">
+        <div class="card" style="padding:0;overflow:hidden;">
+          <!-- Nav bar -->
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--line);">
+            <button class="btn-outline" style="padding:6px 10px;" onclick="calNav(-1)"><i class="ti ti-chevron-left"></i></button>
+            <div style="display:flex;align-items:center;gap:10px;">
+              <span id="cal-week-label" style="font-weight:700;font-size:14px;"></span>
+              <button class="btn-outline" style="font-size:11px;padding:4px 10px;" onclick="calToday()">Today</button>
+            </div>
+            <button class="btn-outline" style="padding:6px 10px;" onclick="calNav(1)"><i class="ti ti-chevron-right"></i></button>
+          </div>
+          <!-- Day headers row -->
+          <div id="cal-day-headers" class="cal-grid" style="border-bottom:1px solid var(--line);padding:6px 0;"></div>
+          <!-- All-day row -->
+          <div id="cal-allday-row" class="cal-grid" style="border-bottom:2px solid var(--line);min-height:28px;"></div>
+          <!-- Scrollable time grid -->
+          <div style="max-height:560px;overflow-y:auto;" id="cal-scroll-area">
+            <div id="cal-time-grid" class="cal-grid"></div>
+          </div>
+        </div>
+        <div style="margin-top:8px;display:flex;align-items:center;gap:16px;padding:0 4px;flex-wrap:wrap;" id="cal-legend"></div>
       </div>
     </div>
 
@@ -1759,11 +1800,162 @@
     if (done.length)     html += taskGroupHeader('Completed', 'var(--ink-3)',  done.length)     + done.map(renderTaskItem).join('');
 
     container.innerHTML = html;
+    if (calWeekStart && document.getElementById('tasks-cal-view').style.display !== 'none') renderCalendar();
   }
 
   function refreshInvoices() {
     const invoices = getStorageData('invoices');
     renderList('invoices', invoices, renderInvoiceItem);
+  }
+
+  // ── Task calendar ──────────────────────────────────────────────────────────
+  const CAT_COLORS = { admin:'#185fa5', client:'#1d9e75', outreach:'#854f0b', personal:'#7c3aed', design:'#d946a8', development:'#0891b2', marketing:'#ea580c', research:'#6366f1', meeting:'#0284c7', review:'#b45309', learning:'#16a34a', health:'#dc2626', finance:'#ca8a04', other:'#64748b', general:'#5c636e' };
+  const CAL_START = 7;   // 7am
+  const CAL_END   = 22;  // 10pm
+  const HR_H      = 64;  // px per hour
+
+  let calWeekStart = null;
+
+  function tasksTab(tab) {
+    const isCal = tab === 'cal';
+    document.getElementById('tasks-list-view').style.display = isCal ? 'none' : 'block';
+    document.getElementById('tasks-cal-view').style.display  = isCal ? 'block' : 'none';
+    document.getElementById('tasks-tab-list').classList.toggle('active', !isCal);
+    document.getElementById('tasks-tab-cal').classList.toggle('active',  isCal);
+    if (isCal) { if (!calWeekStart) initCalendar(); else renderCalendar(); }
+  }
+
+  function initCalendar() {
+    const now = new Date();
+    const dow = now.getDay();
+    const mon = new Date(now);
+    mon.setDate(now.getDate() - (dow === 0 ? 6 : dow - 1));
+    mon.setHours(0, 0, 0, 0);
+    calWeekStart = mon;
+    renderCalendar();
+  }
+
+  function calNav(dir) {
+    calWeekStart = new Date(calWeekStart);
+    calWeekStart.setDate(calWeekStart.getDate() + dir * 7);
+    renderCalendar();
+  }
+
+  function calToday() { initCalendar(); }
+
+  function renderCalendar() {
+    const tasks   = getStorageData('tasks');
+    const todayStr = new Date().toISOString().slice(0, 10);
+    const days = Array.from({ length: 7 }, (_, i) => {
+      const d = new Date(calWeekStart);
+      d.setDate(calWeekStart.getDate() + i);
+      return d;
+    });
+
+    // Week label
+    const fmt = d => d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    document.getElementById('cal-week-label').textContent = `${fmt(days[0])} – ${fmt(days[6])}`;
+
+    // ── Day headers ──
+    const DOW = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+    document.getElementById('cal-day-headers').innerHTML =
+      '<div></div>' +
+      days.map((d, i) => {
+        const ds = d.toISOString().slice(0, 10);
+        const isToday = ds === todayStr;
+        return `<div style="text-align:center;padding:2px 0;">
+          <div style="font-size:10px;font-weight:600;color:var(--ink-3);text-transform:uppercase;letter-spacing:0.05em;">${DOW[i]}</div>
+          <div style="font-size:17px;font-weight:700;width:32px;height:32px;display:inline-flex;align-items:center;justify-content:center;border-radius:50%;margin-top:2px;${isToday ? 'background:var(--accent);color:#fff;' : 'color:var(--ink);'}">${d.getDate()}</div>
+        </div>`;
+      }).join('');
+
+    // ── All-day row ──
+    document.getElementById('cal-allday-row').innerHTML =
+      '<div style="font-size:9px;color:var(--ink-3);padding:4px 4px 4px 0;text-align:right;align-self:start;padding-top:6px;">all‑day</div>' +
+      days.map(d => {
+        const ds = d.toISOString().slice(0, 10);
+        const allDay = tasks.filter(t => (t.date === ds) && !t.timeStart && !t.done);
+        return `<div style="border-left:1px solid var(--line);padding:2px 3px;min-height:24px;">
+          ${allDay.map(t => {
+            const c = CAT_COLORS[(t.cat||'general').toLowerCase()] || '#5c636e';
+            return `<div style="background:${c}18;border-left:2px solid ${c};border-radius:3px;padding:1px 4px;font-size:10px;font-weight:600;color:${c};white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:1px;" title="${t.desc}">${t.desc}</div>`;
+          }).join('')}
+        </div>`;
+      }).join('');
+
+    // ── Time grid ──
+    const totalH = CAL_END - CAL_START;
+    const gridH  = totalH * HR_H;
+
+    // Time label column
+    let timeCol = `<div style="position:relative;height:${gridH}px;">`;
+    for (let h = CAL_START; h <= CAL_END; h++) {
+      const top = (h - CAL_START) * HR_H;
+      if (h < CAL_END) timeCol += `<div class="cal-time-label" style="position:absolute;top:${top}px;right:6px;">${h > 12 ? h - 12 : h}${h >= 12 ? 'pm' : 'am'}</div>`;
+    }
+    timeCol += '</div>';
+
+    // Day columns
+    const dayCols = days.map(d => {
+      const ds = d.toISOString().slice(0, 10);
+      const isToday = ds === todayStr;
+      const timed = tasks.filter(t => t.date === ds && t.timeStart);
+
+      // Hour + half-hour lines
+      let lines = '';
+      for (let h = CAL_START; h < CAL_END; h++) {
+        lines += `<div class="cal-hour-line" style="top:${(h - CAL_START) * HR_H}px;"></div>`;
+        lines += `<div class="cal-half-line" style="top:${(h - CAL_START) * HR_H + HR_H / 2}px;"></div>`;
+      }
+
+      // Current time indicator
+      let nowLine = '';
+      if (isToday) {
+        const now = new Date();
+        const nowH = now.getHours() + now.getMinutes() / 60;
+        if (nowH >= CAL_START && nowH <= CAL_END) {
+          const top = (nowH - CAL_START) * HR_H;
+          nowLine = `<div style="position:absolute;left:0;right:0;top:${top}px;border-top:2px solid var(--red);z-index:5;">
+            <div style="width:8px;height:8px;background:var(--red);border-radius:50%;margin-top:-5px;margin-left:-4px;"></div>
+          </div>`;
+        }
+      }
+
+      // Task event blocks
+      const events = timed.map(t => {
+        const [sh, sm] = t.timeStart.split(':').map(Number);
+        let top = ((sh - CAL_START) + sm / 60) * HR_H;
+        let height = HR_H; // default 1 hr
+        if (t.timeEnd) {
+          const [eh, em] = t.timeEnd.split(':').map(Number);
+          height = Math.max(22, ((eh - sh) + (em - sm) / 60) * HR_H);
+        }
+        top = Math.max(0, top);
+        const c = CAT_COLORS[(t.cat||'general').toLowerCase()] || '#5c636e';
+        const done = t.done ? 'opacity:0.45;' : '';
+        return `<div class="cal-event" style="top:${top}px;height:${height}px;background:${c}18;border-left:3px solid ${c};${done}" title="${t.desc}${t.timeStart ? ' · ' + fmt12(t.timeStart) : ''}${t.timeEnd ? ' – ' + fmt12(t.timeEnd) : ''}">
+          <div class="cal-event-title" style="color:${c};">${t.desc}</div>
+          ${height > 30 ? `<div class="cal-event-time" style="color:${c};">${fmt12(t.timeStart)}${t.timeEnd ? ' – ' + fmt12(t.timeEnd) : ''}</div>` : ''}
+        </div>`;
+      }).join('');
+
+      return `<div class="cal-day-col${isToday ? ' cal-today-col' : ''}" style="height:${gridH}px;">${lines}${nowLine}${events}</div>`;
+    }).join('');
+
+    document.getElementById('cal-time-grid').innerHTML = timeCol + dayCols;
+
+    // Scroll to 8am on first render
+    const scroll = document.getElementById('cal-scroll-area');
+    if (scroll.scrollTop === 0) scroll.scrollTop = (8 - CAL_START) * HR_H - 16;
+
+    // Legend
+    const usedCats = [...new Set(tasks.map(t => (t.cat||'general').toLowerCase()))].slice(0, 6);
+    document.getElementById('cal-legend').innerHTML = usedCats.map(cat => {
+      const c = CAT_COLORS[cat] || '#5c636e';
+      return `<span style="display:inline-flex;align-items:center;gap:4px;font-size:11px;color:var(--ink-2);">
+        <span style="width:10px;height:10px;border-radius:2px;background:${c};display:inline-block;"></span>${cat}
+      </span>`;
+    }).join('');
   }
 
   function refreshGoals() {
