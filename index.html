@@ -3079,11 +3079,11 @@
 
   function signInGoogle() {
     const provider = new firebase.auth.GoogleAuthProvider();
-    // Safari blocks popups — use redirect only for Safari/iOS
-    // Chrome on Android supports popups via user gesture and redirect has cookie issues
-    const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
-    if (isSafari) {
-      firebase.auth().signInWithRedirect(provider).catch(e => showAuthError(e.message));
+    // Always use redirect on mobile — Chrome mobile treats signInWithPopup as
+    // a same-tab navigation, which reloads the page and loses the popup result
+    const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+    if (isMobile) {
+      firebase.auth().signInWithRedirect(provider);
     } else {
       firebase.auth().signInWithPopup(provider).catch(e => showAuthError(e.message));
     }
@@ -3096,21 +3096,19 @@
 
   // ========== APP INITIALIZATION ==========
   function initApp() {
-    // Initialize Firebase
     if (typeof DASH_CONFIG !== 'undefined' && DASH_CONFIG.firebase && typeof firebase !== 'undefined') {
       try {
         if (!firebase.apps.length) firebase.initializeApp(DASH_CONFIG.firebase);
         db = firebase.firestore();
-      } catch (e) {
-        console.warn('Firebase init failed:', e);
-      }
+      } catch (e) { console.warn('Firebase init failed:', e); }
     }
 
-    // Keep both screens hidden until we know what to show
+    // Hide everything while Firebase resolves redirect + auth state
     document.getElementById('auth-screen').style.display = 'none';
     document.getElementById('app-container').style.display = 'none';
 
     function startWithUser(user) {
+      const isNewLogin = !_authUser || _authUser.uid !== user.uid;
       _authUser = user;
       const profileKey = `dashProfile_${user.uid}`;
       const saved = localStorage.getItem(profileKey);
@@ -3126,32 +3124,33 @@
       document.getElementById('auth-screen').style.display = 'none';
       document.getElementById('app-container').style.display = 'flex';
       renderApp();
-      syncFromFirestore().then(() => { refresh(); renderApp(); });
-      startReminderChecker();
+      if (isNewLogin) {
+        syncFromFirestore().then(() => { refresh(); renderApp(); });
+        startReminderChecker();
+      }
     }
 
-    // getRedirectResult() MUST be awaited before showing any UI —
-    // it processes the Google redirect and fires onAuthStateChanged with the user
+    // Process redirect result FIRST, then set up the auth state listener.
+    // Using .finally() ensures the listener is always registered whether
+    // getRedirectResult() resolved or rejected.
     firebase.auth().getRedirectResult()
-      .then(() => {
-        // If a redirect just completed, onAuthStateChanged fires automatically.
-        // If no redirect pending, we still need to check for an existing session.
+      .then(result => {
+        if (result && result.user) {
+          // redirect sign-in succeeded — onAuthStateChanged will fire
+        }
+      })
+      .catch(e => {
+        showAuthError(e.message);
+      })
+      .finally(() => {
         firebase.auth().onAuthStateChanged(user => {
           if (user) {
-            if (!_authUser) startWithUser(user);
+            startWithUser(user);
           } else {
             _authUser = null;
             document.getElementById('app-container').style.display = 'none';
             document.getElementById('auth-screen').style.display = 'flex';
           }
-        });
-      })
-      .catch(e => {
-        showAuthError(e.message);
-        document.getElementById('auth-screen').style.display = 'flex';
-        // Still set up auth listener so existing sessions work
-        firebase.auth().onAuthStateChanged(user => {
-          if (user && !_authUser) startWithUser(user);
         });
       });
   }
