@@ -426,6 +426,16 @@
           </div>
           <div class="form-row">
             <div class="form-group">
+              <label>Start time <span style="color:var(--ink-3);font-weight:400;">(optional)</span></label>
+              <input id="tasks-timeStart" type="time">
+            </div>
+            <div class="form-group">
+              <label>End time <span style="color:var(--ink-3);font-weight:400;">(optional)</span></label>
+              <input id="tasks-timeEnd" type="time">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
               <label>Category</label>
               <select id="tasks-cat"><option>General</option><option>Admin</option><option>Client</option><option>Outreach</option><option>Design</option><option>Development</option><option>Marketing</option><option>Research</option><option>Meeting</option><option>Review</option><option>Personal</option><option>Learning</option><option>Health</option><option>Finance</option><option>Other</option></select>
             </div>
@@ -1170,8 +1180,8 @@
   const MODULE_CONFIG = {
     tasks: {
       storage: 'dashTasks',
-      fields: ['desc', 'start', 'date', 'cat', 'pri'],
-      defaults: { done: false, start: defaultDate, date: defaultDate, cat: 'General', pri: 'med' },
+      fields: ['desc', 'start', 'date', 'timeStart', 'timeEnd', 'cat', 'pri'],
+      defaults: { done: false, start: defaultDate, date: defaultDate, cat: 'General', pri: 'med', timeStart: '', timeEnd: '' },
       validation: (data) => data.desc,
       emptyMsg: 'No tasks yet',
       sort: (a, b) => {
@@ -1482,11 +1492,19 @@
   }
 
   // ========== SPECIFIC RENDERERS ==========
+  function fmt12(t) {
+    if (!t) return '';
+    const [h, m] = t.split(':').map(Number);
+    const ampm = h >= 12 ? 'pm' : 'am';
+    return ((h % 12) || 12) + ':' + String(m).padStart(2, '0') + ampm;
+  }
+
   function renderTaskItem(task) {
     const opacity = task.done ? 'opacity:0.6' : '';
     const strikethrough = task.done ? 'text-decoration:line-through' : '';
     const checked = task.done ? 'checked' : '';
     const dateRange = task.start && task.start !== task.date ? `${task.start} → ${task.date}` : task.date;
+    const timePart = task.timeStart ? (task.timeEnd ? `${fmt12(task.timeStart)} – ${fmt12(task.timeEnd)}` : fmt12(task.timeStart)) : '';
     const catPalette = { admin: '#185fa5', client: '#1d9e75', outreach: '#854f0b', personal: '#7c3aed', design: '#d946a8', development: '#0891b2', marketing: '#ea580c', research: '#6366f1', meeting: '#0284c7', review: '#b45309', learning: '#16a34a', health: '#dc2626', finance: '#ca8a04', other: '#64748b', general: '#5c636e' };
     const catColor = catPalette[(task.cat||'general').toLowerCase()] || '#5c636e';
     return `<div class="item" style="${opacity}">
@@ -1494,7 +1512,9 @@
         <input type="checkbox" ${checked} onchange="toggleTask('${task.id}')" style="cursor:pointer;width:18px;height:18px;">
         <div>
           <div class="item-title" style="${strikethrough}">${task.desc}</div>
-          <div class="item-meta">${dateRange}</div>
+          <div class="item-meta">
+            ${timePart ? `<span style="color:var(--accent);font-weight:600;margin-right:6px;"><i class="ti ti-clock" style="font-size:10px;"></i> ${timePart}</span>` : ''}${dateRange}
+          </div>
         </div>
       </div>
       <span style="font-size:10px;font-weight:700;text-transform:uppercase;color:${catColor};background:${catColor}22;padding:2px 8px;border-radius:999px;letter-spacing:0.05em;white-space:nowrap;flex-shrink:0;">${task.cat||'General'}</span>
