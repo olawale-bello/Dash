@@ -1337,6 +1337,7 @@
   let userData = { name: '', studio: '', target: 2000, email: '', logo: '', currency: 'EUR' };
   let db = null;
   let _authUser = null;
+  const _isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
 
   function userDataCol() {
     if (!db || !_authUser) return null;
@@ -3120,7 +3121,6 @@
   }
 
   // ========== APP INITIALIZATION ==========
-  const _isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
 
   function initApp() {
     if (typeof DASH_CONFIG !== 'undefined' && DASH_CONFIG.firebase && typeof firebase !== 'undefined') {
