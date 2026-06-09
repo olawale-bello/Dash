@@ -3104,43 +3104,54 @@
       }
     }
 
-    // Show auth screen while we wait for auth state
-    document.getElementById('auth-screen').style.display = 'flex';
+    // Keep both screens hidden until we know what to show
+    document.getElementById('auth-screen').style.display = 'none';
     document.getElementById('app-container').style.display = 'none';
 
-    // Handle redirect result from mobile Google sign-in
-    firebase.auth().getRedirectResult().catch(e => showAuthError(e.message));
-
-    firebase.auth().onAuthStateChanged(user => {
-      if (user) {
-        _authUser = user;
-
-        // Load or build user profile
-        const profileKey = `dashProfile_${user.uid}`;
-        const saved = localStorage.getItem(profileKey);
-        if (saved) {
-          userData = JSON.parse(saved);
-        } else {
-          const displayName = user.displayName || user.email.split('@')[0] || 'User';
-          userData = { name: displayName, studio: 'Dash', target: 2000, email: user.email, logo: '', currency: 'EUR' };
-          localStorage.setItem(profileKey, JSON.stringify(userData));
-        }
-        // Keep name/email in sync with auth profile
-        if (user.displayName) userData.name = user.displayName;
-        if (user.email)       userData.email = user.email;
-
-        document.getElementById('auth-screen').style.display = 'none';
-        document.getElementById('app-container').style.display = 'flex';
-
-        renderApp();
-        syncFromFirestore().then(() => { refresh(); renderApp(); });
-        startReminderChecker();
+    function startWithUser(user) {
+      _authUser = user;
+      const profileKey = `dashProfile_${user.uid}`;
+      const saved = localStorage.getItem(profileKey);
+      if (saved) {
+        userData = JSON.parse(saved);
       } else {
-        _authUser = null;
-        document.getElementById('app-container').style.display = 'none';
-        document.getElementById('auth-screen').style.display = 'flex';
+        const displayName = user.displayName || user.email.split('@')[0] || 'User';
+        userData = { name: displayName, studio: 'Dash', target: 2000, email: user.email, logo: '', currency: 'EUR' };
+        localStorage.setItem(profileKey, JSON.stringify(userData));
       }
-    });
+      if (user.displayName) userData.name = user.displayName;
+      if (user.email)       userData.email = user.email;
+      document.getElementById('auth-screen').style.display = 'none';
+      document.getElementById('app-container').style.display = 'flex';
+      renderApp();
+      syncFromFirestore().then(() => { refresh(); renderApp(); });
+      startReminderChecker();
+    }
+
+    // getRedirectResult() MUST be awaited before showing any UI —
+    // it processes the Google redirect and fires onAuthStateChanged with the user
+    firebase.auth().getRedirectResult()
+      .then(() => {
+        // If a redirect just completed, onAuthStateChanged fires automatically.
+        // If no redirect pending, we still need to check for an existing session.
+        firebase.auth().onAuthStateChanged(user => {
+          if (user) {
+            if (!_authUser) startWithUser(user);
+          } else {
+            _authUser = null;
+            document.getElementById('app-container').style.display = 'none';
+            document.getElementById('auth-screen').style.display = 'flex';
+          }
+        });
+      })
+      .catch(e => {
+        showAuthError(e.message);
+        document.getElementById('auth-screen').style.display = 'flex';
+        // Still set up auth listener so existing sessions work
+        firebase.auth().onAuthStateChanged(user => {
+          if (user && !_authUser) startWithUser(user);
+        });
+      });
   }
 
   // ── Task reminders ──────────────────────────────────────────────────────────
