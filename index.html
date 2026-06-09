@@ -176,6 +176,10 @@
   .cal-event-time{opacity:0.8;font-size:10px;margin-top:1px;}
   .cal-time-label{font-size:10px;color:var(--ink-3);text-align:right;padding-right:6px;line-height:1;transform:translateY(-6px);}
   .cal-today-col{background:rgba(24,95,165,0.03);}
+  .cal-day-col{cursor:crosshair;}
+  .cal-hover-line{position:absolute;left:0;right:0;pointer-events:none;z-index:8;display:none;}
+  .cal-hover-line::before{content:'';display:block;border-top:1.5px dashed var(--accent);}
+  .cal-hover-badge{position:absolute;right:4px;top:-9px;background:var(--accent);color:#fff;font-size:9px;font-weight:700;padding:1px 6px;border-radius:999px;white-space:nowrap;}
   .finance-actions{flex-wrap:wrap;}
   .greet-info{min-width:0;}
   .stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:16px;}
@@ -1939,7 +1943,12 @@
         </div>`;
       }).join('');
 
-      return `<div class="cal-day-col${isToday ? ' cal-today-col' : ''}" style="height:${gridH}px;">${lines}${nowLine}${events}</div>`;
+      const hoverEl = `<div class="cal-hover-line" id="cal-hl-${ds}"><span class="cal-hover-badge" id="cal-hb-${ds}"></span></div>`;
+      return `<div class="cal-day-col${isToday ? ' cal-today-col' : ''}" style="height:${gridH}px;" data-date="${ds}"
+        onmousemove="calHover(event,'${ds}')"
+        onmouseleave="calHoverEnd('${ds}')"
+        onclick="calClick(event,'${ds}')"
+      >${hoverEl}${lines}${nowLine}${events}</div>`;
     }).join('');
 
     document.getElementById('cal-time-grid').innerHTML = timeCol + dayCols;
@@ -1956,6 +1965,48 @@
         <span style="width:10px;height:10px;border-radius:2px;background:${c};display:inline-block;"></span>${cat}
       </span>`;
     }).join('');
+  }
+
+  function calSnapTime(e, col) {
+    const rect = col.getBoundingClientRect();
+    const y    = Math.max(0, e.clientY - rect.top);
+    const totalMin = Math.round((y / HR_H) * 60 / 15) * 15;
+    const h = CAL_START + Math.floor(totalMin / 60);
+    const m = totalMin % 60;
+    return { y, h: Math.min(h, CAL_END - 1), m };
+  }
+
+  function calHover(e, ds) {
+    if (e.target.closest('.cal-event')) return;
+    const col  = e.currentTarget;
+    const { y, h, m } = calSnapTime(e, col);
+    const line = document.getElementById('cal-hl-' + ds);
+    const badge = document.getElementById('cal-hb-' + ds);
+    if (!line) return;
+    line.style.display = 'block';
+    line.style.top = y + 'px';
+    badge.textContent = fmt12(`${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`);
+  }
+
+  function calHoverEnd(ds) {
+    const line = document.getElementById('cal-hl-' + ds);
+    if (line) line.style.display = 'none';
+  }
+
+  function calClick(e, ds) {
+    if (e.target.closest('.cal-event')) return;
+    const col = e.currentTarget;
+    const { h, m } = calSnapTime(e, col);
+    const startTime = `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
+    const endH      = Math.min(h + 1, CAL_END);
+    const endTime   = `${String(endH).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
+    tasksTab('list');
+    openForm('tasks');
+    document.getElementById('tasks-date').value      = ds;
+    document.getElementById('tasks-start').value     = ds;
+    document.getElementById('tasks-timeStart').value = startTime;
+    document.getElementById('tasks-timeEnd').value   = endTime;
+    setTimeout(() => document.getElementById('tasks-desc').focus(), 50);
   }
 
   function refreshGoals() {
