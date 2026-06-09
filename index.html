@@ -2168,10 +2168,19 @@
 
     document.getElementById('today-plan-summary').style.display = 'block';
     document.getElementById('today-plan-summary').innerHTML = `
-      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;text-align:center;">
-        <div><div style="font-weight:700;color:var(--accent);">${totalPlanned}m</div><div style="font-size:11px;color:var(--ink-3);">planned</div></div>
-        <div><div style="font-weight:700;color:var(--green);">${fmtElapsed(totalTracked)}</div><div style="font-size:11px;color:var(--ink-3);">tracked</div></div>
-        <div><div style="font-weight:700;color:var(--ink-2);">${free}m</div><div style="font-size:11px;color:var(--ink-3);">free gaps</div></div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <div style="flex:1;min-width:80px;background:var(--accent-soft,#eff6ff);border-radius:10px;padding:10px 12px;display:flex;align-items:center;gap:8px;">
+          <span style="font-size:18px;">📅</span>
+          <div><div style="font-weight:700;font-size:15px;color:var(--accent);">${totalPlanned}m</div><div style="font-size:10px;color:var(--ink-3);margin-top:1px;">planned</div></div>
+        </div>
+        <div style="flex:1;min-width:80px;background:#f0fdf4;border-radius:10px;padding:10px 12px;display:flex;align-items:center;gap:8px;">
+          <span style="font-size:18px;">⏱</span>
+          <div><div style="font-weight:700;font-size:15px;color:var(--green);">${fmtElapsed(totalTracked)}</div><div style="font-size:10px;color:var(--ink-3);margin-top:1px;">tracked</div></div>
+        </div>
+        <div style="flex:1;min-width:80px;background:#f8fafc;border-radius:10px;padding:10px 12px;display:flex;align-items:center;gap:8px;">
+          <span style="font-size:18px;">🕐</span>
+          <div><div style="font-weight:700;font-size:15px;color:var(--ink-2);">${free}m</div><div style="font-size:10px;color:var(--ink-3);margin-top:1px;">free gaps</div></div>
+        </div>
       </div>`;
   }
 
