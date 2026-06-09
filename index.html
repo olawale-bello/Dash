@@ -3130,26 +3130,26 @@
       }
     }
 
-    // Process redirect result FIRST, then set up the auth state listener.
-    // Using .finally() ensures the listener is always registered whether
-    // getRedirectResult() resolved or rejected.
+    // Firebase sometimes fires onAuthStateChanged(null) briefly during redirect
+    // token exchange — debounce the sign-out reaction to avoid flashing login screen
+    let _signOutTimer = null;
+
     firebase.auth().getRedirectResult()
-      .then(result => {
-        if (result && result.user) {
-          // redirect sign-in succeeded — onAuthStateChanged will fire
-        }
-      })
-      .catch(e => {
-        showAuthError(e.message);
-      })
+      .catch(e => showAuthError(e.message))
       .finally(() => {
         firebase.auth().onAuthStateChanged(user => {
           if (user) {
+            clearTimeout(_signOutTimer);
             startWithUser(user);
           } else {
-            _authUser = null;
-            document.getElementById('app-container').style.display = 'none';
-            document.getElementById('auth-screen').style.display = 'flex';
+            // Wait 3s before reacting to null — covers the redirect token exchange gap
+            _signOutTimer = setTimeout(() => {
+              if (!firebase.auth().currentUser) {
+                _authUser = null;
+                document.getElementById('app-container').style.display = 'none';
+                document.getElementById('auth-screen').style.display = 'flex';
+              }
+            }, 3000);
           }
         });
       });
