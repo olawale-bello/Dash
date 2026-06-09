@@ -23,6 +23,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
 <script>
   const DASH_CONFIG = {
     user: {
@@ -364,13 +365,8 @@
         <input id="auth-password" type="password" placeholder="••••••••" autocomplete="current-password" onkeydown="if(event.key==='Enter')signIn()">
       </div>
       <button class="btn" style="width:100%;justify-content:center;" onclick="signIn()">Sign in</button>
-      <div id="google-signin-wrap">
-        <div class="auth-divider">or</div>
-        <button class="btn-google" onclick="signInGoogle()">
-          <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
-          Continue with Google
-        </button>
-      </div>
+      <div class="auth-divider">or</div>
+      <div id="google-signin-wrap" style="display:flex;justify-content:center;"></div>
       <div class="auth-switch">No account? <a href="#" onclick="showAuthView('signup');return false;">Create one</a></div>
     </div>
 
@@ -389,13 +385,8 @@
         <input id="auth-password-up" type="password" placeholder="Min 6 characters" autocomplete="new-password" onkeydown="if(event.key==='Enter')signUp()">
       </div>
       <button class="btn" style="width:100%;justify-content:center;" onclick="signUp()">Create account</button>
-      <div id="google-signup-wrap">
-        <div class="auth-divider">or</div>
-        <button class="btn-google" onclick="signInGoogle()">
-          <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
-          Continue with Google
-        </button>
-      </div>
+      <div class="auth-divider">or</div>
+      <div id="google-signup-wrap" style="display:flex;justify-content:center;"></div>
       <div class="auth-switch">Have an account? <a href="#" onclick="showAuthView('signin');return false;">Sign in</a></div>
     </div>
   </div>
@@ -3081,14 +3072,33 @@
       .catch(e => showAuthError(e.message));
   }
 
+  const GIS_CLIENT_ID = '487487301272-vmp2nmma4j5k52dilov3h5kjk78v6uoq.apps.googleusercontent.com';
+
+  function handleGoogleCredential(response) {
+    const credential = firebase.auth.GoogleAuthProvider.credential(response.credential);
+    firebase.auth().signInWithCredential(credential)
+      .catch(e => showAuthError(e.message));
+  }
+
+  function initGIS() {
+    if (typeof google === 'undefined' || !google.accounts) return;
+    google.accounts.id.initialize({
+      client_id: GIS_CLIENT_ID,
+      callback: handleGoogleCredential,
+      auto_select: false,
+      cancel_on_tap_outside: true,
+    });
+    // Render Google's own button into both sign-in and sign-up containers
+    ['google-signin-wrap', 'google-signup-wrap'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) google.accounts.id.renderButton(el, { theme: 'outline', size: 'large', width: 336, text: 'continue_with' });
+    });
+  }
+
   function signInGoogle() {
-    const provider = new firebase.auth.GoogleAuthProvider();
-    // Always use redirect on mobile — Chrome mobile treats signInWithPopup as
-    // a same-tab navigation, which reloads the page and loses the popup result
-    const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
-    if (isMobile) {
-      firebase.auth().signInWithRedirect(provider);
-    } else {
+    // Desktop fallback if GIS button wasn't clicked directly
+    if (!_isMobile) {
+      const provider = new firebase.auth.GoogleAuthProvider();
       firebase.auth().signInWithPopup(provider).catch(e => showAuthError(e.message));
     }
   }
@@ -3102,12 +3112,11 @@
   const _isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
 
   function initApp() {
-    // Hide Google sign-in on mobile — cross-origin session issues on non-Firebase-Hosted domains
-    if (_isMobile) {
-      const si = document.getElementById('google-signin-wrap');
-      const su = document.getElementById('google-signup-wrap');
-      if (si) si.innerHTML = '<p style="text-align:center;font-size:12px;color:var(--ink-3);margin-top:12px;">Use email &amp; password to sign in on mobile.</p>';
-      if (su) su.innerHTML = '<p style="text-align:center;font-size:12px;color:var(--ink-3);margin-top:12px;">Use email &amp; password to sign up on mobile.</p>';
+    // Init GIS button once the GSI script has loaded
+    if (typeof google !== 'undefined' && google.accounts) {
+      initGIS();
+    } else {
+      window.addEventListener('load', () => { if (typeof google !== 'undefined') initGIS(); });
     }
 
     if (typeof DASH_CONFIG !== 'undefined' && DASH_CONFIG.firebase && typeof firebase !== 'undefined') {
