@@ -176,6 +176,17 @@
   .cal-event-time{opacity:0.8;font-size:10px;margin-top:1px;}
   .cal-time-label{font-size:10px;color:var(--ink-3);text-align:right;padding-right:6px;line-height:1;transform:translateY(-6px);}
   .cal-today-col{background:rgba(24,95,165,0.03);}
+  .today-item{display:flex;gap:12px;align-items:flex-start;padding:10px 0;border-bottom:1px solid var(--line);}
+  .today-item:last-child{border-bottom:none;}
+  .today-time{font-size:11px;color:var(--ink-3);width:88px;flex-shrink:0;padding-top:2px;font-variant-numeric:tabular-nums;}
+  .today-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;margin-top:4px;}
+  .today-body{flex:1;min-width:0;}
+  .today-title{font-weight:600;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .today-meta{font-size:11px;color:var(--ink-3);margin-top:2px;}
+  .today-progress{height:4px;background:var(--surface-2);border-radius:999px;margin-top:6px;overflow:hidden;}
+  .today-progress-fill{height:100%;border-radius:999px;transition:width 1s linear;}
+  .today-timer-btn{flex-shrink:0;padding:4px 10px;font-size:11px;font-weight:600;border-radius:6px;border:none;cursor:pointer;font-family:inherit;}
+  .today-gap{padding:6px 0 6px 100px;font-size:11px;color:var(--ink-3);display:flex;align-items:center;gap:6px;}
   .cal-day-col{cursor:crosshair;}
   .cal-hover-line{position:absolute;left:0;right:0;pointer-events:none;z-index:8;display:none;}
   .cal-hover-line::before{content:'';display:block;border-top:1.5px dashed var(--accent);}
@@ -420,6 +431,7 @@
       <div class="fin-tab-bar">
         <button class="fin-tab active" id="tasks-tab-list" onclick="tasksTab('list')"><i class="ti ti-list" style="margin-right:5px;"></i>List</button>
         <button class="fin-tab" id="tasks-tab-cal" onclick="tasksTab('cal')"><i class="ti ti-calendar-week" style="margin-right:5px;"></i>Calendar</button>
+        <button class="fin-tab" id="tasks-tab-today" onclick="tasksTab('today')"><i class="ti ti-clock-play" style="margin-right:5px;"></i>Today</button>
       </div>
 
       <!-- Notification permission banner -->
@@ -504,6 +516,19 @@
           </div>
         </div>
         <div style="margin-top:8px;display:flex;align-items:center;gap:16px;padding:0 4px;flex-wrap:wrap;" id="cal-legend"></div>
+      </div>
+
+      <!-- Today view -->
+      <div id="tasks-today-view" style="display:none;">
+        <div class="card">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
+            <div class="card-title" style="margin:0;" id="today-plan-heading">Today's Plan</div>
+            <span style="font-size:11px;color:var(--ink-3);" id="today-plan-date"></span>
+          </div>
+          <div style="font-size:12px;color:var(--ink-3);margin-bottom:16px;">Timed tasks + schedule blocks · click <i class="ti ti-player-play" style="font-size:11px;"></i> to track actual time</div>
+          <div id="today-plan-list"></div>
+          <div id="today-plan-summary" style="display:none;margin-top:12px;background:var(--surface-2);border-radius:var(--radius-sm);padding:12px 14px;font-size:13px;"></div>
+        </div>
       </div>
     </div>
 
@@ -1830,12 +1855,12 @@
   let calWeekStart = null;
 
   function tasksTab(tab) {
-    const isCal = tab === 'cal';
-    document.getElementById('tasks-list-view').style.display = isCal ? 'none' : 'block';
-    document.getElementById('tasks-cal-view').style.display  = isCal ? 'block' : 'none';
-    document.getElementById('tasks-tab-list').classList.toggle('active', !isCal);
-    document.getElementById('tasks-tab-cal').classList.toggle('active',  isCal);
-    if (isCal) { if (!calWeekStart) initCalendar(); else renderCalendar(); }
+    document.getElementById('tasks-list-view').style.display  = tab === 'list'  ? 'block' : 'none';
+    document.getElementById('tasks-cal-view').style.display   = tab === 'cal'   ? 'block' : 'none';
+    document.getElementById('tasks-today-view').style.display = tab === 'today' ? 'block' : 'none';
+    ['list','cal','today'].forEach(t => document.getElementById('tasks-tab-' + t).classList.toggle('active', t === tab));
+    if (tab === 'cal')   { if (!calWeekStart) initCalendar(); else renderCalendar(); }
+    if (tab === 'today') renderTodayPlan();
   }
 
   function initCalendar() {
@@ -2016,6 +2041,155 @@
     document.getElementById('tasks-timeStart').value = startTime;
     document.getElementById('tasks-timeEnd').value   = endTime;
     setTimeout(() => document.getElementById('tasks-desc').focus(), 50);
+  }
+
+  // ── Today's Plan ───────────────────────────────────────────────────────────
+  const _timers = {};      // { id: { startMs, elapsed, interval } }
+
+  function toMinutes(t) {
+    if (!t) return null;
+    const [h, m] = t.split(':').map(Number);
+    return h * 60 + m;
+  }
+
+  function minsToStr(mins) {
+    const h = Math.floor(mins / 60), m = mins % 60;
+    return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
+  }
+
+  function fmtElapsed(secs) {
+    const h = Math.floor(secs / 3600), m = Math.floor((secs % 3600) / 60), s = secs % 60;
+    return h > 0 ? `${h}h ${m}m` : m > 0 ? `${m}m ${s}s` : `${s}s`;
+  }
+
+  function renderTodayPlan() {
+    const todayStr = defaultDate;
+    const dow      = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'][new Date().getDay()];
+    document.getElementById('today-plan-date').textContent = new Date().toLocaleDateString('en-US', { weekday:'long', month:'long', day:'numeric' });
+
+    const tasks    = getStorageData('tasks').filter(t => t.date === todayStr && t.timeStart);
+    const schedule = getStorageData('schedule').filter(s => s.day === dow && s.time);
+
+    // Build unified item list
+    const items = [
+      ...tasks.map(t => ({
+        id:      't_' + t.id,
+        rawId:   t.id,
+        type:    'task',
+        title:   t.desc,
+        cat:     t.cat || 'general',
+        start:   toMinutes(t.timeStart),
+        end:     t.timeEnd ? toMinutes(t.timeEnd) : toMinutes(t.timeStart) + 60,
+        done:    t.done,
+      })),
+      ...schedule.map(s => ({
+        id:    's_' + s.id,
+        rawId: s.id,
+        type:  'schedule',
+        title: s.title,
+        cat:   'schedule',
+        start: toMinutes(s.time),
+        end:   toMinutes(s.time) + Math.round((s.duration || 1) * 60),
+        done:  false,
+      })),
+    ].sort((a, b) => a.start - b.start);
+
+    const container = document.getElementById('today-plan-list');
+    if (!items.length) {
+      container.innerHTML = '<p style="color:var(--ink-3);font-size:13px;">No timed tasks or schedule blocks for today. Add a time to a task to see it here.</p>';
+      document.getElementById('today-plan-summary').style.display = 'none';
+      return;
+    }
+
+    const catColor = id => CAT_COLORS[id.toLowerCase()] || '#5c636e';
+    const now = new Date();
+    const nowMins = now.getHours() * 60 + now.getMinutes();
+
+    let html = '';
+    for (let i = 0; i < items.length; i++) {
+      const item = items[i];
+      const dur  = item.end - item.start;
+      const c    = item.type === 'schedule' ? '#854f0b' : catColor(item.cat);
+      const isActive = nowMins >= item.start && nowMins < item.end;
+      const isPast   = nowMins >= item.end;
+
+      // Gap before this item
+      if (i > 0) {
+        const gap = item.start - items[i - 1].end;
+        if (gap > 0) {
+          html += `<div class="today-gap"><i class="ti ti-hourglass-empty"></i> ${gap} min free</div>`;
+        }
+      }
+
+      // Timer state
+      const ts = _timers[item.id];
+      const elapsed = ts ? ts.elapsed + (ts.startMs ? Math.floor((Date.now() - ts.startMs) / 1000) : 0) : 0;
+      const elapsedMins = Math.floor(elapsed / 60);
+      const progressPct = dur > 0 ? Math.min(100, Math.round((elapsedMins / dur) * 100)) : 0;
+      const isRunning = ts && ts.startMs;
+
+      const statusColor = isPast ? 'var(--ink-3)' : isActive ? 'var(--green)' : 'var(--ink-2)';
+      const statusDot   = isPast ? '#ccc' : isActive ? '#1d9e75' : c;
+
+      html += `<div class="today-item" id="today-item-${item.id}">
+        <div class="today-time" style="color:${statusColor};">
+          ${fmt12(minsToStr(item.start))}<br>
+          <span style="font-size:10px;">→ ${fmt12(minsToStr(item.end))}</span>
+        </div>
+        <div class="today-dot" style="background:${statusDot};${isActive ? 'box-shadow:0 0 0 3px ' + statusDot + '30;' : ''}"></div>
+        <div class="today-body">
+          <div class="today-title" style="${isPast && !elapsed ? 'color:var(--ink-3);' : ''}">${item.title}</div>
+          <div class="today-meta">
+            ${item.type === 'schedule' ? '<span style="color:var(--amber);">Schedule</span>' : `<span style="color:${c};">${item.cat}</span>`}
+            · ${dur} min planned
+            ${elapsed ? ` · <span style="color:var(--green);font-weight:600;">⏱ ${fmtElapsed(elapsed)} tracked</span>` : ''}
+          </div>
+          ${elapsed ? `<div class="today-progress"><div class="today-progress-fill" id="prog-${item.id}" style="width:${progressPct}%;background:${c};"></div></div>` : ''}
+        </div>
+        ${item.type === 'task' ? `
+        <button class="today-timer-btn" id="tbtn-${item.id}"
+          style="background:${isRunning ? '#fef3f2' : 'var(--accent-soft)'};color:${isRunning ? 'var(--red)' : 'var(--accent)'};"
+          onclick="toggleTodayTimer('${item.id}')">
+          <i class="ti ti-${isRunning ? 'player-stop' : 'player-play'}"></i>
+          ${isRunning ? 'Stop' : 'Start'}
+        </button>` : ''}
+      </div>`;
+    }
+
+    container.innerHTML = html;
+
+    // Summary
+    const totalPlanned = items.reduce((s, i) => s + (i.end - i.start), 0);
+    const totalTracked = Object.values(_timers).reduce((s, t) => s + t.elapsed + (t.startMs ? Math.floor((Date.now() - t.startMs) / 1000) : 0), 0);
+    const firstStart   = items[0].start;
+    const lastEnd      = items[items.length - 1].end;
+    const span         = lastEnd - firstStart;
+    const free         = span - totalPlanned;
+
+    document.getElementById('today-plan-summary').style.display = 'block';
+    document.getElementById('today-plan-summary').innerHTML = `
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;text-align:center;">
+        <div><div style="font-weight:700;color:var(--accent);">${totalPlanned}m</div><div style="font-size:11px;color:var(--ink-3);">planned</div></div>
+        <div><div style="font-weight:700;color:var(--green);">${fmtElapsed(totalTracked)}</div><div style="font-size:11px;color:var(--ink-3);">tracked</div></div>
+        <div><div style="font-weight:700;color:var(--ink-2);">${free}m</div><div style="font-size:11px;color:var(--ink-3);">free gaps</div></div>
+      </div>`;
+  }
+
+  function toggleTodayTimer(id) {
+    if (!_timers[id]) _timers[id] = { startMs: null, elapsed: 0, interval: null };
+    const t = _timers[id];
+    if (t.startMs) {
+      // Stop
+      t.elapsed += Math.floor((Date.now() - t.startMs) / 1000);
+      t.startMs = null;
+      clearInterval(t.interval);
+      t.interval = null;
+    } else {
+      // Start
+      t.startMs = Date.now();
+      t.interval = setInterval(() => renderTodayPlan(), 1000);
+    }
+    renderTodayPlan();
   }
 
   function refreshGoals() {
