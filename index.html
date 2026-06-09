@@ -347,8 +347,22 @@
 </head>
 <body>
 
+<!-- ── Loading Screen ── -->
+<div id="loading-screen" style="position:fixed;inset:0;z-index:10000;background:#f4f5f7;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;">
+  <div style="width:56px;height:56px;background:linear-gradient(135deg,#185fa5,#378add);border-radius:14px;display:flex;align-items:center;justify-content:center;">
+    <i class="ti ti-layout-dashboard" style="font-size:28px;color:#fff;"></i>
+  </div>
+  <div style="font-size:16px;font-weight:700;color:#185fa5;">Dash</div>
+  <div style="width:32px;height:3px;background:#e6f1fb;border-radius:99px;overflow:hidden;">
+    <div style="height:100%;width:40%;background:#185fa5;border-radius:99px;animation:dash-load 1s ease-in-out infinite alternate;"></div>
+  </div>
+</div>
+<style>
+@keyframes dash-load { from{transform:translateX(0)} to{transform:translateX(150%)} }
+</style>
+
 <!-- ── Auth Screen ── -->
-<div id="auth-screen">
+<div id="auth-screen" style="display:none;">
   <div class="auth-card">
     <div class="auth-logo">
       <div class="auth-logo-icon"><i class="ti ti-layout-dashboard"></i></div>
@@ -3120,17 +3134,7 @@
   function signInGoogle() {
     const provider = new firebase.auth.GoogleAuthProvider();
     if (_isMobile) {
-      // On mobile, try GIS One Tap first (uses signInWithCredential — no redirect needed)
-      if (typeof google !== 'undefined' && google.accounts && google.accounts.id) {
-        google.accounts.id.prompt(notification => {
-          // If One Tap was suppressed/blocked, fall back to redirect
-          if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
-            firebase.auth().signInWithRedirect(provider);
-          }
-        });
-      } else {
-        firebase.auth().signInWithRedirect(provider);
-      }
+      firebase.auth().signInWithRedirect(provider);
     } else {
       firebase.auth().signInWithPopup(provider).catch(e => showAuthError(e.message));
     }
@@ -3159,9 +3163,12 @@
       } catch (e) { console.warn('Firebase init failed:', e); }
     }
 
-    // Hide everything while Firebase resolves redirect + auth state
+    // Show loading screen while Firebase resolves redirect + auth state
+    document.getElementById('loading-screen').style.display = 'flex';
     document.getElementById('auth-screen').style.display = 'none';
     document.getElementById('app-container').style.display = 'none';
+
+    function hideLoading() { document.getElementById('loading-screen').style.display = 'none'; }
 
     function startWithUser(user) {
       const isNewLogin = !_authUser || _authUser.uid !== user.uid;
@@ -3178,6 +3185,7 @@
       }
       if (user.displayName) userData.name = user.displayName;
       if (user.email)       userData.email = user.email;
+      hideLoading();
       document.getElementById('auth-screen').style.display = 'none';
       document.getElementById('app-container').style.display = 'flex';
       renderApp();
@@ -3190,6 +3198,7 @@
     function showLogin() {
       localStorage.removeItem('dash_uid');
       _authUser = null;
+      hideLoading();
       document.getElementById('app-container').style.display = 'none';
       document.getElementById('auth-screen').style.display = 'flex';
     }
