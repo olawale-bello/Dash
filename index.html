@@ -176,6 +176,9 @@
   .rep-stat-label{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;color:var(--ink-3);margin-bottom:4px;}
   .rep-stat-val{font-size:22px;font-weight:700;color:var(--ink);}
   .cal-grid{display:grid;grid-template-columns:44px repeat(7,1fr);}
+  @media(max-width:768px){
+    .cal-grid{grid-template-columns:44px repeat(3,1fr);}
+  }
   .cal-day-col{position:relative;border-left:1px solid var(--line);}
   .cal-hour-line{position:absolute;left:0;right:0;border-top:1px solid var(--line);pointer-events:none;}
   .cal-half-line{position:absolute;left:0;right:0;border-top:1px dashed var(--line);pointer-events:none;opacity:0.6;}
@@ -585,7 +588,7 @@
           <!-- All-day row -->
           <div id="cal-allday-row" class="cal-grid" style="border-bottom:2px solid var(--line);min-height:28px;"></div>
           <!-- Scrollable time grid -->
-          <div style="max-height:560px;overflow-y:auto;" id="cal-scroll-area">
+          <div style="max-height:min(560px,60vh);overflow-y:auto;" id="cal-scroll-area">
             <div id="cal-time-grid" class="cal-grid"></div>
           </div>
         </div>
@@ -1943,19 +1946,27 @@
     if (tab === 'today') renderTodayPlan();
   }
 
+  const CAL_DAYS = _isMobile ? 3 : 7;
+
   function initCalendar() {
     const now = new Date();
-    const dow = now.getDay();
-    const mon = new Date(now);
-    mon.setDate(now.getDate() - (dow === 0 ? 6 : dow - 1));
-    mon.setHours(0, 0, 0, 0);
-    calWeekStart = mon;
+    const start = new Date(now);
+    if (_isMobile) {
+      // Centre today: start = today - 1
+      start.setDate(now.getDate() - 1);
+    } else {
+      // Start on Monday of current week
+      const dow = now.getDay();
+      start.setDate(now.getDate() - (dow === 0 ? 6 : dow - 1));
+    }
+    start.setHours(0, 0, 0, 0);
+    calWeekStart = start;
     renderCalendar();
   }
 
   function calNav(dir) {
     calWeekStart = new Date(calWeekStart);
-    calWeekStart.setDate(calWeekStart.getDate() + dir * 7);
+    calWeekStart.setDate(calWeekStart.getDate() + dir * CAL_DAYS);
     renderCalendar();
   }
 
@@ -1964,25 +1975,30 @@
   function renderCalendar() {
     const tasks   = getStorageData('tasks');
     const todayStr = new Date().toISOString().slice(0, 10);
-    const days = Array.from({ length: 7 }, (_, i) => {
+    const days = Array.from({ length: CAL_DAYS }, (_, i) => {
       const d = new Date(calWeekStart);
       d.setDate(calWeekStart.getDate() + i);
       return d;
     });
 
-    // Week label
+    // Week label + dynamic grid columns
     const fmt = d => d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-    document.getElementById('cal-week-label').textContent = `${fmt(days[0])} – ${fmt(days[6])}`;
+    document.getElementById('cal-week-label').textContent = `${fmt(days[0])} – ${fmt(days[CAL_DAYS - 1])}`;
+    const colTpl = `44px repeat(${CAL_DAYS}, 1fr)`;
+    ['cal-day-headers','cal-allday-row','cal-time-grid'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.style.gridTemplateColumns = colTpl;
+    });
 
     // ── Day headers ──
-    const DOW = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+    const DOW_ALL = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
     document.getElementById('cal-day-headers').innerHTML =
       '<div></div>' +
-      days.map((d, i) => {
+      days.map(d => {
         const ds = d.toISOString().slice(0, 10);
         const isToday = ds === todayStr;
         return `<div style="text-align:center;padding:2px 0;">
-          <div style="font-size:10px;font-weight:600;color:var(--ink-3);text-transform:uppercase;letter-spacing:0.05em;">${DOW[i]}</div>
+          <div style="font-size:10px;font-weight:600;color:var(--ink-3);text-transform:uppercase;letter-spacing:0.05em;">${DOW_ALL[d.getDay()]}</div>
           <div style="font-size:17px;font-weight:700;width:32px;height:32px;display:inline-flex;align-items:center;justify-content:center;border-radius:50%;margin-top:2px;${isToday ? 'background:var(--accent);color:#fff;' : 'color:var(--ink);'}">${d.getDate()}</div>
         </div>`;
       }).join('');
@@ -2062,6 +2078,7 @@
         onmousemove="calHover(event,'${ds}')"
         onmouseleave="calHoverEnd('${ds}')"
         onclick="calClick(event,'${ds}')"
+        ontouchend="calClick(event,'${ds}')"
       >${hoverEl}${lines}${nowLine}${events}</div>`;
     }).join('');
 
