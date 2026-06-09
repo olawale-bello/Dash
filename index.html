@@ -3210,7 +3210,7 @@
           if (parsed.category) {
             document.getElementById('finance-cat').value = parsed.category;
           }
-          document.getElementById('finance-type').value = 'expense';
+          document.getElementById('finance-type').value = parsed.type || 'expense';
 
           statusDiv.style.display = 'block';
           statusDiv.style.background = 'var(--green-soft)';
@@ -3235,42 +3235,69 @@
   }
 
   function parseReceiptData(text) {
-    const parsed = { amount: '', merchant: '', category: 'Food' };
+    const parsed = { amount: '', merchant: '', category: 'General', type: 'expense' };
+    const lines  = text.split('\n').map(l => l.trim()).filter(Boolean);
+    const full   = lines.join(' ');
 
-    const lines = text.split('\n');
+    // ── Wise / bank transfer detection ───────────────────────────────────────
+    const isWise = /wise|transfer confirmation/i.test(full);
+    const isTransferIn = /total to [a-z]/i.test(full) || /paid out/i.test(full);
 
-    for (const line of lines) {
-      const trimmed = line.trim();
+    if (isWise) {
+      parsed.type = isTransferIn ? 'income' : 'expense';
+      parsed.category = isTransferIn ? 'Other income' : 'Other expense';
 
-      if (!parsed.amount) {
-        const amountMatch = trimmed.match(/(?:total|amount|price|cost|due)[\s:]*[\$€]?([\d.,]+)/i);
-        if (amountMatch) {
-          let amount = amountMatch[1].replace(/,/g, '.');
-          amount = parseFloat(amount).toFixed(2);
-          if (!isNaN(amount) && parseFloat(amount) > 0 && parseFloat(amount) < 100000) {
-            parsed.amount = amount;
-          }
-        }
+      // "Amount paid by NAME\n18.95 EUR" or "Amount paid by NAME  18.95 EUR"
+      const paidByMatch = full.match(/amount paid by ([A-Z\s]+?)[\s\n]+([\d.,]+)\s*EUR/i);
+      if (paidByMatch) {
+        parsed.merchant = 'Transfer from ' + paidByMatch[1].trim();
+        parsed.amount   = parseFloat(paidByMatch[2].replace(/,/g, '.')).toFixed(2);
       }
 
-      if (!parsed.merchant) {
-        if (trimmed.length > 3 && trimmed.length < 50 && !trimmed.match(/^\d/) && trimmed.match(/[a-zA-Z]/)) {
-          const keywords = ['store', 'market', 'shop', 'cafe', 'restaurant', 'pharmacy', 'grocery', 'gas', 'mall'];
-          if (keywords.some(k => trimmed.toLowerCase().includes(k))) {
-            parsed.merchant = trimmed;
-          } else if (trimmed.length < 30 && !trimmed.match(/[€$\d%]/)) {
-            parsed.merchant = trimmed;
-          }
+      // "Total to NAME\n18.95 EUR" — most reliable for received amount
+      const totalToMatch = full.match(/total to [a-z\s]+?[\s\n]+([\d.,]+)\s*EUR/i);
+      if (totalToMatch) {
+        parsed.amount = parseFloat(totalToMatch[1].replace(/,/g, '.')).toFixed(2);
+      }
+    }
+
+    // ── Generic amount: look for "Total X.XX", "Amount X.XX EUR", standalone ─
+    if (!parsed.amount) {
+      const patterns = [
+        /(?:total|amount due|grand total|subtotal)[\s:€$]*([\d.,]+)/i,
+        /([\d.,]+)\s*EUR/i,
+        /EUR\s*([\d.,]+)/i,
+        /[\$€£₦]([\d.,]+)/,
+      ];
+      for (const re of patterns) {
+        const m = full.match(re);
+        if (m) {
+          const v = parseFloat(m[1].replace(/,/g, '.'));
+          if (!isNaN(v) && v > 0 && v < 100000) { parsed.amount = v.toFixed(2); break; }
         }
       }
     }
 
-    if (parsed.merchant.toLowerCase().includes('grocery') || parsed.merchant.toLowerCase().includes('store')) {
-      parsed.category = 'Food';
-    } else if (parsed.merchant.toLowerCase().includes('gas') || parsed.merchant.toLowerCase().includes('fuel')) {
-      parsed.category = 'Transport';
-    } else if (parsed.merchant.toLowerCase().includes('pharmacy')) {
-      parsed.category = 'Health';
+    // ── Generic merchant ──────────────────────────────────────────────────────
+    if (!parsed.merchant) {
+      for (const line of lines) {
+        if (line.length > 2 && line.length < 60 && /[a-zA-Z]/.test(line) && !/^\d/.test(line)
+            && !/date|time|receipt|invoice|thank|vat|tax|ref|no\.|#/i.test(line)) {
+          parsed.merchant = line;
+          break;
+        }
+      }
+    }
+
+    // ── Category heuristics ───────────────────────────────────────────────────
+    if (!isWise) {
+      const m = (parsed.merchant + ' ' + full).toLowerCase();
+      if (/grocery|supermarket|food|restaurant|cafe|coffee|eat|lunch|dinner|burger|pizza/.test(m)) parsed.category = 'Food';
+      else if (/bolt|uber|taxi|bus|train|fuel|gas|transport|metro/.test(m))                       parsed.category = 'Transport';
+      else if (/pharmacy|doctor|clinic|health|hospital/.test(m))                                  parsed.category = 'Health';
+      else if (/amazon|shop|store|market|mall/.test(m))                                            parsed.category = 'Shopping';
+      else if (/gym|fitness|sport/.test(m))                                                        parsed.category = 'Gym';
+      else if (/subscription|netflix|spotify|software|app/.test(m))                               parsed.category = 'Subscriptions';
     }
 
     return parsed;
