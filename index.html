@@ -23,7 +23,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
-<script src="https://accounts.google.com/gsi/client" async defer></script>
+<script src="https://accounts.google.com/gsi/client" async defer onload="initGIS()"></script>
 <script>
   const DASH_CONFIG = {
     user: {
@@ -3112,12 +3112,9 @@
   const _isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
 
   function initApp() {
-    // Init GIS button once the GSI script has loaded
-    if (typeof google !== 'undefined' && google.accounts) {
-      initGIS();
-    } else {
-      window.addEventListener('load', () => { if (typeof google !== 'undefined') initGIS(); });
-    }
+    // initGIS() is called via onload on the GSI script tag
+    // Call it now too in case the script already loaded before initApp ran
+    if (typeof google !== 'undefined' && google.accounts) initGIS();
 
     if (typeof DASH_CONFIG !== 'undefined' && DASH_CONFIG.firebase && typeof firebase !== 'undefined') {
       try {
