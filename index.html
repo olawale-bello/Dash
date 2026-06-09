@@ -347,22 +347,8 @@
 </head>
 <body>
 
-<!-- ── Loading Screen ── -->
-<div id="loading-screen" style="position:fixed;inset:0;z-index:10000;background:#f4f5f7;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;">
-  <div style="width:56px;height:56px;background:linear-gradient(135deg,#185fa5,#378add);border-radius:14px;display:flex;align-items:center;justify-content:center;">
-    <i class="ti ti-layout-dashboard" style="font-size:28px;color:#fff;"></i>
-  </div>
-  <div style="font-size:16px;font-weight:700;color:#185fa5;">Dash</div>
-  <div style="width:32px;height:3px;background:#e6f1fb;border-radius:99px;overflow:hidden;">
-    <div style="height:100%;width:40%;background:#185fa5;border-radius:99px;animation:dash-load 1s ease-in-out infinite alternate;"></div>
-  </div>
-</div>
-<style>
-@keyframes dash-load { from{transform:translateX(0)} to{transform:translateX(150%)} }
-</style>
-
 <!-- ── Auth Screen ── -->
-<div id="auth-screen" style="display:none;">
+<div id="auth-screen">
   <div class="auth-card">
     <div class="auth-logo">
       <div class="auth-logo-icon"><i class="ti ti-layout-dashboard"></i></div>
@@ -3150,30 +3136,24 @@
   const _isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
 
   function initApp() {
-    // initGIS() is called via onload on the GSI script tag
-    // Call it now too in case the script already loaded before initApp ran
     if (typeof google !== 'undefined' && google.accounts) initGIS();
 
     if (typeof DASH_CONFIG !== 'undefined' && DASH_CONFIG.firebase && typeof firebase !== 'undefined') {
       try {
         if (!firebase.apps.length) firebase.initializeApp(DASH_CONFIG.firebase);
         db = firebase.firestore();
-        // Force localStorage persistence — more reliable than IndexedDB on mobile
         firebase.auth().setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch(() => {});
       } catch (e) { console.warn('Firebase init failed:', e); }
     }
 
-    // Show loading screen while Firebase resolves redirect + auth state
-    document.getElementById('loading-screen').style.display = 'flex';
-    document.getElementById('auth-screen').style.display = 'none';
+    // Show auth screen by default — switch to app when Firebase confirms user
+    document.getElementById('auth-screen').style.display = 'flex';
     document.getElementById('app-container').style.display = 'none';
 
-    function hideLoading() { document.getElementById('loading-screen').style.display = 'none'; }
-
     function startWithUser(user) {
-      const isNewLogin = !_authUser || _authUser.uid !== user.uid;
+      if (_authUser && _authUser.uid === user.uid) return; // already started
       _authUser = user;
-      localStorage.setItem('dash_uid', user.uid); // persist session hint
+      localStorage.setItem('dash_uid', user.uid);
       const profileKey = `dashProfile_${user.uid}`;
       const saved = localStorage.getItem(profileKey);
       if (saved) {
@@ -3185,45 +3165,28 @@
       }
       if (user.displayName) userData.name = user.displayName;
       if (user.email)       userData.email = user.email;
-      hideLoading();
       document.getElementById('auth-screen').style.display = 'none';
       document.getElementById('app-container').style.display = 'flex';
       renderApp();
-      if (isNewLogin) {
-        syncFromFirestore().then(() => { refresh(); renderApp(); });
-        startReminderChecker();
-      }
+      syncFromFirestore().then(() => { refresh(); renderApp(); });
+      startReminderChecker();
     }
 
-    function showLogin() {
-      localStorage.removeItem('dash_uid');
-      _authUser = null;
-      hideLoading();
-      document.getElementById('app-container').style.display = 'none';
-      document.getElementById('auth-screen').style.display = 'flex';
-    }
-
-    // If user was previously signed in, give Firebase longer to restore the session
-    const prevUid = localStorage.getItem('dash_uid');
-    const waitMs  = prevUid ? 8000 : 4000;
-    let _authTimer = setTimeout(showLogin, waitMs);
-
+    // Handle Google redirect result then set up ongoing auth listener
     firebase.auth().getRedirectResult()
+      .then(result => { if (result && result.user) startWithUser(result.user); })
       .catch(e => showAuthError(e.message))
       .finally(() => {
         firebase.auth().onAuthStateChanged(user => {
-          clearTimeout(_authTimer);
           if (user) {
             startWithUser(user);
           } else {
-            // Brief null can fire during token refresh — only show login if
-            // no previous session, or after a short grace period
-            if (!prevUid) {
-              showLogin();
-            } else {
-              _authTimer = setTimeout(() => {
-                if (!firebase.auth().currentUser) showLogin();
-              }, 5000);
+            if (_authUser) {
+              // Was signed in — genuine sign-out
+              _authUser = null;
+              localStorage.removeItem('dash_uid');
+              document.getElementById('app-container').style.display = 'none';
+              document.getElementById('auth-screen').style.display = 'flex';
             }
           }
         });
