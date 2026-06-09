@@ -3115,16 +3115,25 @@
       auto_select: false,
       cancel_on_tap_outside: true,
     });
-    // Render Google's own button into both sign-in and sign-up containers
-    ['google-signin-wrap', 'google-signup-wrap'].forEach(id => {
-      const el = document.getElementById(id);
-      if (el) google.accounts.id.renderButton(el, { theme: 'outline', size: 'large', width: 336, text: 'continue_with' });
-    });
   }
 
   function signInGoogle() {
     const provider = new firebase.auth.GoogleAuthProvider();
-    firebase.auth().signInWithPopup(provider).catch(e => showAuthError(e.message));
+    if (_isMobile) {
+      // On mobile, try GIS One Tap first (uses signInWithCredential — no redirect needed)
+      if (typeof google !== 'undefined' && google.accounts && google.accounts.id) {
+        google.accounts.id.prompt(notification => {
+          // If One Tap was suppressed/blocked, fall back to redirect
+          if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
+            firebase.auth().signInWithRedirect(provider);
+          }
+        });
+      } else {
+        firebase.auth().signInWithRedirect(provider);
+      }
+    } else {
+      firebase.auth().signInWithPopup(provider).catch(e => showAuthError(e.message));
+    }
   }
 
   function signOut() {
