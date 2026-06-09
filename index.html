@@ -23,7 +23,6 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
-<script src="https://accounts.google.com/gsi/client" async defer onload="initGIS()"></script>
 <script>
   const DASH_CONFIG = {
     user: {
@@ -3099,30 +3098,18 @@
       .catch(e => showAuthError(e.message));
   }
 
-  const GIS_CLIENT_ID = '487487301272-vmp2nmma4j5k52dilov3h5kjk78v6uoq.apps.googleusercontent.com';
-
-  function handleGoogleCredential(response) {
-    const credential = firebase.auth.GoogleAuthProvider.credential(response.credential);
-    firebase.auth().signInWithCredential(credential)
-      .catch(e => showAuthError(e.message));
-  }
-
-  function initGIS() {
-    if (typeof google === 'undefined' || !google.accounts) return;
-    google.accounts.id.initialize({
-      client_id: GIS_CLIENT_ID,
-      callback: handleGoogleCredential,
-      auto_select: false,
-      cancel_on_tap_outside: true,
-    });
-  }
-
   function signInGoogle() {
-    const provider = new firebase.auth.GoogleAuthProvider();
-    if (_isMobile) {
-      firebase.auth().signInWithRedirect(provider);
-    } else {
-      firebase.auth().signInWithPopup(provider).catch(e => showAuthError(e.message));
+    try {
+      const provider = new firebase.auth.GoogleAuthProvider();
+      if (_isMobile) {
+        firebase.auth().signInWithRedirect(provider)
+          .catch(e => showAuthError(e.message));
+      } else {
+        firebase.auth().signInWithPopup(provider)
+          .catch(e => showAuthError(e.message));
+      }
+    } catch(e) {
+      showAuthError('Sign-in error: ' + e.message);
     }
   }
 
@@ -3136,8 +3123,6 @@
   const _isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
 
   function initApp() {
-    if (typeof google !== 'undefined' && google.accounts) initGIS();
-
     if (typeof DASH_CONFIG !== 'undefined' && DASH_CONFIG.firebase && typeof firebase !== 'undefined') {
       try {
         if (!firebase.apps.length) firebase.initializeApp(DASH_CONFIG.firebase);
