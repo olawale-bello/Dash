@@ -3079,7 +3079,12 @@
 
   function signInGoogle() {
     const provider = new firebase.auth.GoogleAuthProvider();
-    firebase.auth().signInWithPopup(provider).catch(e => showAuthError(e.message));
+    const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+    if (isMobile) {
+      firebase.auth().signInWithRedirect(provider).catch(e => showAuthError(e.message));
+    } else {
+      firebase.auth().signInWithPopup(provider).catch(e => showAuthError(e.message));
+    }
   }
 
   function signOut() {
@@ -3102,6 +3107,9 @@
     // Show auth screen while we wait for auth state
     document.getElementById('auth-screen').style.display = 'flex';
     document.getElementById('app-container').style.display = 'none';
+
+    // Handle redirect result from mobile Google sign-in
+    firebase.auth().getRedirectResult().catch(e => showAuthError(e.message));
 
     firebase.auth().onAuthStateChanged(user => {
       if (user) {
