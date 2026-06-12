@@ -1,4 +1,4 @@
-const CACHE = 'dash-v1';
+const CACHE = 'dash-v2';
 const PRECACHE = [
   '/',
   '/index.html',
@@ -21,11 +21,32 @@ self.addEventListener('activate', e => {
 });
 
 self.addEventListener('fetch', e => {
-  // Only cache same-origin GET requests; let Firebase/CDN pass through
   if (e.request.method !== 'GET') return;
   const url = new URL(e.request.url);
+  // Only handle same-origin; let Firebase/CDN requests pass straight through.
   if (url.origin !== location.origin) return;
 
+  const isAppShell =
+    e.request.mode === 'navigate' ||
+    e.request.destination === 'document' ||
+    url.pathname === '/' ||
+    url.pathname.endsWith('.html');
+
+  if (isAppShell) {
+    // NETWORK-FIRST: always fetch the latest app code, fall back to cache only when offline.
+    e.respondWith(
+      fetch(e.request)
+        .then(res => {
+          const clone = res.clone();
+          caches.open(CACHE).then(c => c.put(e.request, clone));
+          return res;
+        })
+        .catch(() => caches.match(e.request).then(c => c || caches.match('/index.html')))
+    );
+    return;
+  }
+
+  // CACHE-FIRST for other static assets (icons, logo, manifest).
   e.respondWith(
     caches.match(e.request).then(cached => {
       const network = fetch(e.request).then(res => {
