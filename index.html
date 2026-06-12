@@ -3318,6 +3318,18 @@
   }
 
   function openSettings() {
+    const u = (typeof firebase !== 'undefined' && firebase.auth) ? firebase.auth().currentUser : null;
+    if (u) {
+      const provider = (u.providerData[0] && u.providerData[0].providerId) || 'unknown';
+      const method = provider === 'google.com' ? 'Google' : provider === 'password' ? 'Email / Password' : provider;
+      alert(
+        'YOUR ACCOUNT\n\n' +
+        'Email: ' + (u.email || '—') + '\n' +
+        'Sign-in method: ' + method + '\n' +
+        'Account ID: ' + u.uid + '\n\n' +
+        '(Compare this Account ID on web vs mobile — if they differ, they are separate accounts holding separate data.)'
+      );
+    }
     const studio = prompt('Studio name:', userData.studio);
     if (studio !== null) {
       userData.studio = studio;
