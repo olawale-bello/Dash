@@ -3317,17 +3317,27 @@
     document.getElementById('mob-overlay').classList.remove('open');
   }
 
-  function openSettings() {
+  async function openSettings() {
     const u = (typeof firebase !== 'undefined' && firebase.auth) ? firebase.auth().currentUser : null;
     if (u) {
       const provider = (u.providerData[0] && u.providerData[0].providerId) || 'unknown';
       const method = provider === 'google.com' ? 'Google' : provider === 'password' ? 'Email / Password' : provider;
+      // Live-test the Firestore read so this device self-reports whether it can reach the cloud.
+      let cloud = 'checking…';
+      try {
+        const read = db.collection('users').doc(u.uid).collection('dashData').doc('tasks').get();
+        const timeout = new Promise((_, rej) => setTimeout(() => rej(new Error('TIMED OUT — connection blocked')), 8000));
+        const snap = await Promise.race([read, timeout]);
+        cloud = snap.exists ? ((snap.data().data || []).length + ' task items found') : 'no data at this path (empty)';
+      } catch (e) {
+        cloud = 'FAILED — ' + (e.code || '') + ' ' + e.message;
+      }
       alert(
         'YOUR ACCOUNT\n\n' +
         'Email: ' + (u.email || '—') + '\n' +
         'Sign-in method: ' + method + '\n' +
         'Account ID: ' + u.uid + '\n\n' +
-        '(Compare this Account ID on web vs mobile — if they differ, they are separate accounts holding separate data.)'
+        'Cloud read (tasks): ' + cloud
       );
     }
     const studio = prompt('Studio name:', userData.studio);
