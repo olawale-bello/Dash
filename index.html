@@ -242,6 +242,8 @@
   .mob-drawer-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;}
   .mob-drawer-item{display:flex;flex-direction:column;align-items:center;gap:6px;padding:14px 8px;background:var(--surface-2);border:1px solid var(--line);border-radius:var(--radius-sm);color:var(--ink-2);font-size:11px;font-family:inherit;font-weight:500;cursor:pointer;text-align:center;}
   .mob-drawer-item i{font-size:22px;color:var(--accent);}
+  .mob-drawer-signout{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;margin-top:16px;padding:14px;background:var(--coral-soft);color:var(--coral);border:1px solid var(--coral);border-radius:var(--radius-sm);font-family:inherit;font-size:14px;font-weight:600;cursor:pointer;}
+  .mob-drawer-signout i{font-size:18px;}
   .mob-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:940;}
   .mob-overlay.open{display:block;}
   @media(max-width:1100px){
@@ -1344,8 +1346,10 @@
     <button class="mob-drawer-item" onclick="mobileNav('gym',null);closeMobileDrawer()"><i class="ti ti-barbell"></i><span>Gym</span></button>
     <button class="mob-drawer-item" onclick="mobileNav('progress',null);closeMobileDrawer()"><i class="ti ti-chart-line"></i><span>Progress</span></button>
     <button class="mob-drawer-item" onclick="mobileNav('notes',null);closeMobileDrawer()"><i class="ti ti-notebook"></i><span>Notes</span></button>
-    <button class="mob-drawer-item" onclick="mobileNav('insights-settings',null);closeMobileDrawer()"><i class="ti ti-adjustments"></i><span>Settings</span></button>
+    <button class="mob-drawer-item" onclick="mobileNav('insights-settings',null);closeMobileDrawer()"><i class="ti ti-adjustments"></i><span>Insights</span></button>
+    <button class="mob-drawer-item" onclick="openSettings();closeMobileDrawer()"><i class="ti ti-settings"></i><span>Settings</span></button>
   </div>
+  <button class="mob-drawer-signout" onclick="closeMobileDrawer();signOut()"><i class="ti ti-logout"></i>Sign out</button>
 </div>
 <div class="mob-overlay" id="mob-overlay" onclick="closeMobileDrawer()"></div>
 
