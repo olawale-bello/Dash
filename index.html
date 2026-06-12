@@ -3059,6 +3059,27 @@
     } catch (e) { /* silent */ }
   }
 
+  // Heal the cloud: if a device has more local data than the cloud for a
+  // module, push it up. Safe because it only ever uploads the fuller copy —
+  // recovers data stranded in localStorage when past writes were blocked.
+  async function reconcileWithCloud() {
+    const col = userDataCol();
+    if (!col) return;
+    await Promise.all(Object.entries(FIRESTORE_MAP).map(async ([lsKey, fsDoc]) => {
+      let local = [];
+      try { local = JSON.parse(localStorage.getItem(lsKey) || '[]'); } catch { return; }
+      if (!Array.isArray(local) || local.length === 0) return; // nothing local to push
+      let cloudLen = 0;
+      try {
+        const snap = await col.doc(fsDoc).get();
+        if (snap.exists && Array.isArray(snap.data().data)) cloudLen = snap.data().data.length;
+      } catch { return; } // read blocked → don't risk overwriting
+      if (local.length > cloudLen) {
+        await col.doc(fsDoc).set({ data: local }).catch(() => {});
+      }
+    }));
+  }
+
   async function syncFromFirestore() {
     const col = userDataCol();
     if (!col) return;
@@ -3180,7 +3201,9 @@
       document.getElementById('auth-screen').style.display = 'none';
       document.getElementById('app-container').style.display = 'flex';
       renderApp();
-      syncFromFirestore().then(() => { refresh(); renderApp(); });
+      syncFromFirestore()
+        .then(() => reconcileWithCloud())
+        .then(() => { refresh(); renderApp(); });
       startReminderChecker();
     }
 
