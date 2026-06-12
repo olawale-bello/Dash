@@ -3121,18 +3121,24 @@
   }
 
   function signInGoogle() {
-    try {
-      const provider = new firebase.auth.GoogleAuthProvider();
-      if (_isMobile) {
-        firebase.auth().signInWithRedirect(provider)
-          .catch(e => showAuthError(e.message));
-      } else {
-        firebase.auth().signInWithPopup(provider)
-          .catch(e => showAuthError(e.message));
-      }
-    } catch(e) {
-      showAuthError('Sign-in error: ' + e.message);
-    }
+    const provider = new firebase.auth.GoogleAuthProvider();
+    provider.setCustomParameters({ prompt: 'select_account' });
+    // Popup works across platforms and avoids the cross-domain storage issues
+    // that break signInWithRedirect on a non-Firebase-hosted domain (Vercel).
+    firebase.auth().signInWithPopup(provider)
+      .catch(e => {
+        // Only fall back to redirect if the environment genuinely can't do popups.
+        if (e.code === 'auth/popup-blocked' ||
+            e.code === 'auth/cancelled-popup-request' ||
+            e.code === 'auth/operation-not-supported-in-this-environment') {
+          firebase.auth().signInWithRedirect(provider)
+            .catch(err => showAuthError((err.code || '') + ' ' + err.message));
+        } else if (e.code === 'auth/popup-closed-by-user') {
+          // user dismissed it — no error needed
+        } else {
+          showAuthError((e.code || '') + ' ' + e.message);
+        }
+      });
   }
 
   function signOut() {
