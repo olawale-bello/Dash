@@ -517,6 +517,13 @@
           <div class="stat-label" style="margin-top:8px;color:var(--red);" id="dash-overdue-amt">€0 at risk</div>
         </div>
       </div>
+      <div class="card" id="week-goal-card">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:14px;flex-wrap:wrap;">
+          <div class="card-title" style="margin:0;"><i class="ti ti-target-arrow" style="font-size:18px;margin-right:6px;vertical-align:-3px;"></i>This week's goal</div>
+          <span id="week-goal-range" style="font-size:11px;color:var(--ink-3);"></span>
+        </div>
+        <div id="week-goal-body"></div>
+      </div>
       <div class="card">
         <div class="card-title">Today's tasks</div>
         <div id="dash-task-list"></div>
@@ -3006,6 +3013,88 @@
     document.getElementById('dash-task-list').innerHTML = todayTasks.length
       ? todayTasks.map(renderTaskItem).join('')
       : '<p style="color:var(--ink-3);font-size:13px;">No tasks for today</p>';
+
+    renderWeekGoal();
+  }
+
+  function taskHours(t) {
+    if (t.timeStart && t.timeEnd) {
+      const a = t.timeStart.split(':').map(Number), b = t.timeEnd.split(':').map(Number);
+      const mins = (b[0] * 60 + b[1]) - (a[0] * 60 + a[1]);
+      return mins > 0 ? mins / 60 : 0;
+    }
+    return 0;
+  }
+
+  function renderWeekGoal() {
+    const body = document.getElementById('week-goal-body');
+    if (!body) return;
+    const now = new Date(), dow = now.getDay();
+    const monday = new Date(now); monday.setHours(0, 0, 0, 0);
+    monday.setDate(now.getDate() - (dow === 0 ? 6 : dow - 1));
+    const sunday = new Date(monday); sunday.setDate(monday.getDate() + 6);
+    const fmt = d => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const md = d => months[d.getMonth()] + ' ' + d.getDate();
+    const start = fmt(monday), end = fmt(sunday);
+
+    const rangeEl = document.getElementById('week-goal-range');
+    if (rangeEl) rangeEl.textContent = md(monday) + ' – ' + md(sunday);
+
+    const tasks = getStorageData('tasks').filter(t => t.date >= start && t.date <= end);
+    if (tasks.length === 0) {
+      body.innerHTML = '<p style="color:var(--ink-3);font-size:13px;">No tasks scheduled this week — add some to start tracking your goal.</p>';
+      return;
+    }
+
+    const total = tasks.length;
+    const done = tasks.filter(t => t.done).length;
+    const pct = Math.round(done / total * 100);
+    const plannedH = tasks.reduce((s, t) => s + taskHours(t), 0);
+    const doneH = tasks.filter(t => t.done).reduce((s, t) => s + taskHours(t), 0);
+    const fillColor = pct >= 100 ? 'var(--green)' : 'var(--accent)';
+
+    const cats = {};
+    tasks.forEach(t => {
+      const c = t.cat || 'General';
+      cats[c] = cats[c] || { total: 0, done: 0 };
+      cats[c].total++;
+      if (t.done) cats[c].done++;
+    });
+
+    let html = `
+      <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap;">
+        <div style="font-size:42px;font-weight:800;letter-spacing:-0.03em;line-height:1;color:${fillColor};">${pct}<span style="font-size:20px;">%</span></div>
+        <div style="flex:1;min-width:170px;">
+          <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--ink-2);margin-bottom:6px;">
+            <span><strong style="color:var(--ink);">${done}</strong> of ${total} tasks done</span>
+            <span><strong style="color:var(--ink);">${doneH.toFixed(1)}</strong> / ${plannedH.toFixed(1)}h</span>
+          </div>
+          <div class="progress" style="height:10px;"><div class="progress-fill" style="width:${pct}%;background:${fillColor};"></div></div>
+        </div>
+      </div>
+      <div style="margin-top:16px;display:flex;flex-direction:column;gap:10px;">`;
+    Object.keys(cats).sort().forEach(c => {
+      const o = cats[c];
+      const cp = Math.round(o.done / o.total * 100);
+      const color = CAT_COLORS[c.toLowerCase()] || '#5c636e';
+      html += `<div>
+        <div style="display:flex;justify-content:space-between;font-size:11.5px;margin-bottom:4px;">
+          <span style="font-weight:600;color:${color};">${c}</span>
+          <span style="color:var(--ink-3);">${o.done}/${o.total} done</span>
+        </div>
+        <div class="progress" style="height:6px;"><div class="progress-fill" style="width:${cp}%;background:${color};"></div></div>
+      </div>`;
+    });
+    html += '</div>';
+
+    const msg = pct >= 100 ? 'Goal smashed — every task done this week. 🎉'
+      : pct >= 66 ? 'Strong progress — nearly there.'
+      : pct >= 33 ? 'Good momentum — keep going.'
+      : 'Fresh week — let’s get moving.';
+    html += `<div style="margin-top:12px;font-size:12px;color:var(--ink-2);">${msg}</div>`;
+
+    body.innerHTML = html;
   }
 
   // ========== SPECIAL HANDLERS ==========
