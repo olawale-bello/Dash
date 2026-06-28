@@ -1711,7 +1711,7 @@
         </div>
       </div>
       <span style="font-size:10px;font-weight:700;text-transform:uppercase;color:${catColor};background:${catColor}22;padding:2px 8px;border-radius:999px;letter-spacing:0.05em;white-space:nowrap;flex-shrink:0;">${task.cat||'General'}</span>
-      <span class="pill ${task.priority}">${task.priority}</span>
+      <span class="pill ${task.pri || task.priority || 'med'}">${task.pri || task.priority || 'med'}</span>
       <button class="btn-small" title="Edit" onclick="editItem('tasks','${task.id}')" style="color:var(--accent);"><i class="ti ti-pencil"></i></button>
       <button class="btn-small" onclick="deleteItem('tasks','${task.id}')"><i class="ti ti-trash"></i></button>
     </div>`;
@@ -1929,6 +1929,14 @@
     </div>`;
   }
 
+  function dayLabel(dateStr) {
+    const d = new Date(dateStr + 'T00:00:00');
+    if (isNaN(d)) return dateStr;
+    const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    return days[d.getDay()] + ' · ' + months[d.getMonth()] + ' ' + d.getDate();
+  }
+
   function refreshTasks() {
     const all = getStorageData('tasks');
     const container = document.getElementById('tasks-list');
@@ -1938,18 +1946,25 @@
     }
 
     const today = defaultDate;
-    const byDateAsc = (a, b) => new Date(a.date) - new Date(b.date);
+    const timeSort = (a, b) => (a.timeStart || '99:99').localeCompare(b.timeStart || '99:99');
 
-    const overdue  = all.filter(t => !t.done && t.date < today).sort(byDateAsc);
-    const todayArr = all.filter(t => !t.done && t.date === today);
-    const upcoming = all.filter(t => !t.done && t.date > today).sort(byDateAsc);
-    const done     = all.filter(t => t.done).sort((a, b) => new Date(b.date) - new Date(a.date));
+    // Group incomplete tasks by day; completed tasks fall into a final group.
+    const incomplete = all.filter(t => !t.done);
+    const done = all.filter(t => t.done).sort((a, b) => new Date(b.date) - new Date(a.date));
+
+    const byDate = {};
+    incomplete.forEach(t => { (byDate[t.date] = byDate[t.date] || []).push(t); });
+    const dates = Object.keys(byDate).sort((a, b) => new Date(a) - new Date(b));
 
     let html = '';
-    if (overdue.length)  html += taskGroupHeader('Overdue',   'var(--red)',    overdue.length)  + overdue.map(renderTaskItem).join('');
-    if (todayArr.length) html += taskGroupHeader('Today',     'var(--accent)', todayArr.length) + todayArr.map(renderTaskItem).join('');
-    if (upcoming.length) html += taskGroupHeader('Upcoming',  'var(--ink-2)',  upcoming.length) + upcoming.map(renderTaskItem).join('');
-    if (done.length)     html += taskGroupHeader('Completed', 'var(--ink-3)',  done.length)     + done.map(renderTaskItem).join('');
+    dates.forEach(date => {
+      const isOverdue = date < today;
+      const isToday = date === today;
+      const color = isOverdue ? 'var(--red)' : isToday ? 'var(--accent)' : 'var(--ink-2)';
+      const label = dayLabel(date) + (isOverdue ? ' (overdue)' : isToday ? ' · Today' : '');
+      html += taskGroupHeader(label, color, byDate[date].length) + byDate[date].sort(timeSort).map(renderTaskItem).join('');
+    });
+    if (done.length) html += taskGroupHeader('Completed', 'var(--ink-3)', done.length) + done.map(renderTaskItem).join('');
 
     container.innerHTML = html;
     if (calWeekStart && document.getElementById('tasks-cal-view').style.display !== 'none') renderCalendar();
@@ -2901,17 +2916,14 @@
     document.getElementById('dash-your-rate').textContent = hourlyRate;
     document.getElementById('dash-clients-count').textContent = clients.length;
 
-    // Today's tasks
+    // Today's tasks — current day only, in time-block order
     const tasks = getStorageData('tasks');
-    const todayTasks = tasks.filter(t => t.date === defaultDate);
-    let html = '';
-    todayTasks.forEach(t => {
-      const opacity = t.done ? 'opacity:0.6' : '';
-      const strikethrough = t.done ? 'text-decoration:line-through' : '';
-      const checked = t.done ? 'checked' : '';
-      html += `<div class="item" style="${opacity}"><div class="item-left" style="display:flex;gap:10px;align-items:center;"><input type="checkbox" ${checked} onchange="toggleTask('${t.id}')" style="cursor:pointer;width:18px;height:18px;"><div><div class="item-title" style="${strikethrough}">${t.desc}</div></div></div><span class="pill ${t.priority}">${t.priority}</span><button class="btn-small" onclick="deleteItem('tasks','${t.id}')"><i class="ti ti-trash"></i></button></div>`;
-    });
-    document.getElementById('dash-task-list').innerHTML = html || '<p style="color:var(--ink-3);font-size:13px;">No tasks for today</p>';
+    const todayTasks = tasks
+      .filter(t => t.date === defaultDate)
+      .sort((a, b) => (a.timeStart || '99:99').localeCompare(b.timeStart || '99:99'));
+    document.getElementById('dash-task-list').innerHTML = todayTasks.length
+      ? todayTasks.map(renderTaskItem).join('')
+      : '<p style="color:var(--ink-3);font-size:13px;">No tasks for today</p>';
   }
 
   // ========== SPECIAL HANDLERS ==========
