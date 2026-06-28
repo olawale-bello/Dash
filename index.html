@@ -195,6 +195,17 @@
   .cal-event-time{opacity:0.8;font-size:10px;margin-top:1px;}
   .cal-time-label{font-size:10px;color:var(--ink-3);text-align:right;padding-right:6px;line-height:1;transform:translateY(-6px);}
   .cal-today-col{background:var(--accent-soft);}
+  /* ── Task board (day columns) ── */
+  .task-board{display:flex;gap:12px;overflow-x:auto;padding-bottom:8px;align-items:flex-start;}
+  .task-col{flex:0 0 250px;background:var(--surface-2);border:1px solid var(--line);border-radius:var(--radius);padding:12px;display:flex;flex-direction:column;gap:10px;min-height:90px;}
+  .task-col-head{display:flex;align-items:center;justify-content:space-between;gap:8px;}
+  .task-col-title{font-size:13px;font-weight:700;letter-spacing:-0.01em;}
+  .task-col-count{font-size:10.5px;background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:1px 8px;color:var(--ink-3);flex-shrink:0;}
+  .task-card{background:var(--surface);border:1px solid var(--line);border-left:3px solid var(--accent);border-radius:var(--radius-sm);padding:10px;box-shadow:var(--shadow-sm);}
+  @media(max-width:768px){
+    .task-board{flex-direction:column;overflow-x:visible;}
+    .task-col{flex:1 1 auto;width:100%;}
+  }
   /* ── Page hero (clean Asana-style section header) ── */
   .page-hero{background:var(--surface);border:1px solid var(--line);border-left:3px solid var(--accent);
     border-radius:var(--radius);padding:18px 22px;margin-bottom:18px;display:flex;align-items:center;
@@ -539,6 +550,7 @@
       </div>
       <div class="fin-tab-bar">
         <button class="fin-tab active" id="tasks-tab-list" onclick="tasksTab('list')"><i class="ti ti-list" style="margin-right:5px;"></i>List</button>
+        <button class="fin-tab" id="tasks-tab-board" onclick="tasksTab('board')"><i class="ti ti-layout-board" style="margin-right:5px;"></i>Board</button>
         <button class="fin-tab" id="tasks-tab-cal" onclick="tasksTab('cal')"><i class="ti ti-calendar-week" style="margin-right:5px;"></i>Calendar</button>
         <button class="fin-tab" id="tasks-tab-today" onclick="tasksTab('today')"><i class="ti ti-clock-play" style="margin-right:5px;"></i>Today</button>
       </div>
@@ -637,6 +649,17 @@
           <div style="font-size:12px;color:var(--ink-3);margin-bottom:16px;">Timed tasks + schedule blocks · click <i class="ti ti-player-play" style="font-size:11px;"></i> to track actual time</div>
           <div id="today-plan-list"></div>
           <div id="today-plan-summary" style="display:none;margin-top:12px;background:var(--surface-2);border-radius:var(--radius-sm);padding:12px 14px;font-size:13px;"></div>
+        </div>
+      </div>
+
+      <!-- Board view -->
+      <div id="tasks-board-view" style="display:none;">
+        <div class="card">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+            <div class="card-title" style="margin:0;">Week board</div>
+            <button class="btn" onclick="tasksTab('list');openForm('tasks')"><i class="ti ti-plus" style="margin-right:5px;"></i>New task</button>
+          </div>
+          <div id="tasks-board"></div>
         </div>
       </div>
     </div>
@@ -1967,7 +1990,64 @@
     if (done.length) html += taskGroupHeader('Completed', 'var(--ink-3)', done.length) + done.map(renderTaskItem).join('');
 
     container.innerHTML = html;
+    const boardView = document.getElementById('tasks-board-view');
+    if (boardView && boardView.style.display !== 'none') renderTaskBoard();
     if (calWeekStart && document.getElementById('tasks-cal-view').style.display !== 'none') renderCalendar();
+  }
+
+  function renderTaskCard(task) {
+    const pri = task.pri || task.priority || 'med';
+    const catColor = CAT_COLORS[(task.cat || 'general').toLowerCase()] || '#5c636e';
+    const time = task.timeStart ? (task.timeEnd ? `${fmt12(task.timeStart)} – ${fmt12(task.timeEnd)}` : fmt12(task.timeStart)) : '';
+    return `<div class="task-card" style="border-left-color:${catColor};${task.done ? 'opacity:0.55;' : ''}">
+      <div style="display:flex;align-items:flex-start;gap:8px;">
+        <input type="checkbox" ${task.done ? 'checked' : ''} onchange="toggleTask('${task.id}')" style="margin-top:2px;cursor:pointer;width:16px;height:16px;flex-shrink:0;">
+        <div style="flex:1;min-width:0;">
+          <div style="font-size:12.5px;font-weight:600;line-height:1.35;${task.done ? 'text-decoration:line-through;' : ''}">${task.desc}</div>
+          ${time ? `<div style="font-size:11px;color:var(--accent);font-weight:600;margin-top:4px;"><i class="ti ti-clock" style="font-size:10px;"></i> ${time}</div>` : ''}
+          <div style="display:flex;align-items:center;gap:6px;margin-top:6px;flex-wrap:wrap;">
+            <span style="font-size:9px;font-weight:700;text-transform:uppercase;color:${catColor};background:${catColor}22;padding:2px 7px;border-radius:999px;letter-spacing:0.04em;">${task.cat || 'General'}</span>
+            <span class="pill ${pri}" style="margin:0;">${pri}</span>
+          </div>
+        </div>
+        <button class="btn-small" onclick="deleteItem('tasks','${task.id}')" style="flex-shrink:0;"><i class="ti ti-trash"></i></button>
+      </div>
+    </div>`;
+  }
+
+  function renderTaskBoard() {
+    const all = getStorageData('tasks');
+    const container = document.getElementById('tasks-board');
+    if (!container) return;
+    if (!all || all.length === 0) {
+      container.innerHTML = '<p style="color:var(--ink-3);font-size:13px;">No tasks yet</p>';
+      return;
+    }
+    const today = defaultDate;
+    const timeSort = (a, b) => (a.timeStart || '99:99').localeCompare(b.timeStart || '99:99');
+    const incomplete = all.filter(t => !t.done);
+    const byDate = {};
+    incomplete.forEach(t => { (byDate[t.date] = byDate[t.date] || []).push(t); });
+    const dates = Object.keys(byDate).sort((a, b) => new Date(a) - new Date(b));
+    if (!dates.length) {
+      container.innerHTML = '<p style="color:var(--ink-3);font-size:13px;">All tasks completed 🎉</p>';
+      return;
+    }
+    let html = '<div class="task-board">';
+    dates.forEach(date => {
+      const isToday = date === today, isOverdue = date < today;
+      const accent = isOverdue ? 'var(--red)' : isToday ? 'var(--accent)' : 'var(--ink-2)';
+      const tag = isOverdue ? ' · overdue' : isToday ? ' · Today' : '';
+      html += `<div class="task-col">
+        <div class="task-col-head">
+          <span class="task-col-title" style="color:${accent};">${dayLabel(date)}<span style="font-weight:500;opacity:0.7;">${tag}</span></span>
+          <span class="task-col-count">${byDate[date].length}</span>
+        </div>
+        ${byDate[date].sort(timeSort).map(renderTaskCard).join('')}
+      </div>`;
+    });
+    html += '</div>';
+    container.innerHTML = html;
   }
 
   function refreshInvoices() {
@@ -1985,11 +2065,13 @@
 
   function tasksTab(tab) {
     document.getElementById('tasks-list-view').style.display  = tab === 'list'  ? 'block' : 'none';
+    document.getElementById('tasks-board-view').style.display = tab === 'board' ? 'block' : 'none';
     document.getElementById('tasks-cal-view').style.display   = tab === 'cal'   ? 'block' : 'none';
     document.getElementById('tasks-today-view').style.display = tab === 'today' ? 'block' : 'none';
-    ['list','cal','today'].forEach(t => document.getElementById('tasks-tab-' + t).classList.toggle('active', t === tab));
+    ['list','board','cal','today'].forEach(t => document.getElementById('tasks-tab-' + t).classList.toggle('active', t === tab));
     if (tab === 'cal')   { if (!calWeekStart) initCalendar(); else renderCalendar(); }
     if (tab === 'today') renderTodayPlan();
+    if (tab === 'board') renderTaskBoard();
   }
 
   const CAL_DAYS = _isMobile ? 3 : 7;
